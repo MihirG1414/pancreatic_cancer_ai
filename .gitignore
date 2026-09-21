@@ -1,0 +1,56 @@
+# Local environments and developer caches
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+.worktrees/
+.vscode/
+build/
+dist/
+# Private inputs, local manifests, reports and generated images
+data/
+weights/
+models/
+outputs/
+reports/local/
+cases.local.csv
+*.local.*
+DOC-20260829-WA0025.md
+# Medical images and arrays, anywhere in the repository
+*.nii
+*.nii.gz
+*.dcm
+*.dicom
+*.mha
+*.mhd
+*.nrrd
+*.raw
+*.npy
+*.npz
+*.h5
+*.hdf5
+# Model weights, archives, raw private documents and credentials
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.safetensors
+*.zip
+*.tar
+*.gz
+*.7z
+*.pdf
+*.pem
+*.key
+*.log
+*.tmp
+Thumbs.db
+Desktop.ini
