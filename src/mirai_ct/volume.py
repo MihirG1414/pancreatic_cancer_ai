@@ -2,6 +2,7 @@
 
 import math
 import warnings
+import zlib
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,16 @@ from numpy.typing import NDArray
 
 Volume = nib.Nifti1Image | nib.Nifti2Image
 MIB = 1024**2
+
+
+def _millimetre_factor(image: Volume) -> float:
+    return {"meter": 1000.0, "mm": 1.0, "micron": 0.001}.get(image.header.get_xyzt_units()[0], 1.0)
+
+
+def _affine_mm(image: Volume) -> NDArray[np.float64]:
+    affine = image.affine.copy()
+    affine[:3] *= _millimetre_factor(image)
+    return affine
 
 
 def memory_status() -> dict[str, float]:
@@ -56,14 +67,22 @@ def geometry_warnings(image: Volume) -> list[str]:
     issues = []
     qform, qcode = image.get_qform(coded=True)
     sform, scode = image.get_sform(coded=True)
+    factor = _millimetre_factor(image)
     if not qcode and not scode:
         issues.append("No coded qform/sform; using NiBabel fallback geometry.")
-    if qcode and scode and not np.allclose(qform, sform, rtol=0, atol=1e-3):
+    if (
+        qcode
+        and scode
+        and not np.allclose(qform[:3] * factor, sform[:3] * factor, rtol=0, atol=1e-3)
+    ):
         issues.append("Coded qform and sform disagree; NiBabel selects sform.")
     if image.header.get_xyzt_units()[0] == "unknown":
         issues.append("Spatial units are unknown.")
     if not np.allclose(
-        image.header.get_zooms()[:3], nib.affines.voxel_sizes(image.affine), rtol=0, atol=1e-4
+        np.asarray(image.header.get_zooms()[:3]) * factor,
+        nib.affines.voxel_sizes(image.affine) * factor,
+        rtol=0,
+        atol=1e-4,
     ):
         issues.append("Header voxel spacing and selected affine spacing disagree.")
     return issues
@@ -96,12 +115,51 @@ def check_geometry(scan: Volume, mask: Volume) -> None:
         problems.append("Shape mismatch.")
     if scan.header.get_xyzt_units()[0] != mask.header.get_xyzt_units()[0]:
         problems.append("Spatial units mismatch.")
-    if not np.allclose(scan.header.get_zooms()[:3], mask.header.get_zooms()[:3], rtol=0, atol=1e-4):
+    if not np.allclose(
+        np.asarray(scan.header.get_zooms()[:3]) * _millimetre_factor(scan),
+        np.asarray(mask.header.get_zooms()[:3]) * _millimetre_factor(mask),
+        rtol=0,
+        atol=1e-4,
+    ):
         problems.append("Voxel spacing mismatch.")
-    if not np.allclose(scan.affine, mask.affine, rtol=0, atol=1e-3):
+    if not np.allclose(_affine_mm(scan), _affine_mm(mask), rtol=0, atol=1e-3):
         problems.append("Voxel-to-world affine mismatch (position/direction/spacing).")
     if problems:
         raise ValueError("Cannot overlay: geometry check failed. " + " ".join(problems))
+
+
+def _read_proxy_slice(image: Volume, axis: int, index: int) -> NDArray[np.float32]:
+    """Stream contiguous 2D slabs to avoid full-volume proxy slice read-ahead.
+
+    Other native planes are assembled from one row/column per storage slab using
+    a sequential file handle. Public proxy metadata retains endian/order/scaling.
+    """
+    proxy = image.dataobj
+    storage_axis = 2 if proxy.order == "F" else 0
+    slab_axes = [i for i in range(3) if i != storage_axis]
+    slab_shape = tuple(image.shape[i] for i in slab_axes)
+    slab_bytes = math.prod(slab_shape) * proxy.dtype.itemsize
+    output_axes = [i for i in range(3) if i != axis]
+    plane = np.empty(tuple(image.shape[i] for i in output_axes), dtype=np.float32)
+    slabs = [index] if axis == storage_axis else range(image.shape[storage_axis])
+    with nib.openers.ImageOpener(proxy.file_like, mode="rb") as source:
+        for slab_index in slabs:
+            source.seek(proxy.offset + slab_index * slab_bytes)
+            raw = source.read(slab_bytes)
+            if len(raw) != slab_bytes:
+                raise ValueError("Incomplete voxel payload")
+            slab = np.ndarray(slab_shape, dtype=proxy.dtype, buffer=raw, order=proxy.order)
+            if axis == storage_axis:
+                plane[:] = nib.volumeutils.apply_read_scaling(slab, proxy.slope, proxy.inter)
+            else:
+                selected = np.take(slab, index, axis=slab_axes.index(axis))
+                target = [slice(None), slice(None)]
+                target[output_axes.index(storage_axis)] = slab_index
+                plane[tuple(target)] = nib.volumeutils.apply_read_scaling(
+                    selected, proxy.slope, proxy.inter
+                )
+            del slab, raw
+    return plane
 
 
 def read_slice(image: Volume, axis: int, index: int) -> NDArray[np.float32]:
@@ -112,8 +170,13 @@ def read_slice(image: Volume, axis: int, index: int) -> NDArray[np.float32]:
         raise ValueError(f"Slice index must be between 0 and {image.shape[axis] - 1}.")
     pixels = math.prod(size for i, size in enumerate(image.shape) if i != axis)
     available = psutil.virtual_memory().available
-    # Allow for float64 scaling intermediates and plotting buffers, all 2D.
-    if pixels * 32 > min(64 * MIB, available // 4):
+    # Bound output, one raw storage slab, scaling intermediates and plotting buffers.
+    slab_bytes = 0
+    if nib.is_proxy(image.dataobj):
+        storage_axis = 2 if image.dataobj.order == "F" else 0
+        slab_bytes = math.prod(s for i, s in enumerate(image.shape) if i != storage_axis)
+        slab_bytes *= image.get_data_dtype().itemsize
+    if pixels * 32 + slab_bytes * 2 > min(64 * MIB, available // 4):
         raise MemoryError("Insufficient memory budget for this slice; close other apps.")
     if available < 512 * MIB:
         warnings.warn(
@@ -124,8 +187,11 @@ def read_slice(image: Volume, axis: int, index: int) -> NDArray[np.float32]:
     selection = [slice(None)] * 3
     selection[axis] = index
     try:
-        plane = np.asarray(image.dataobj[tuple(selection)], dtype=np.float32)
-    except (OSError, ValueError, EOFError) as exc:
+        if nib.is_proxy(image.dataobj):
+            plane = _read_proxy_slice(image, axis, index)
+        else:
+            plane = np.asarray(image.dataobj[tuple(selection)], dtype=np.float32)
+    except (OSError, ValueError, EOFError, zlib.error) as exc:
         raise ValueError("Cannot read slice; file may be truncated or corrupt.") from exc
     if not np.isfinite(plane).all():
         raise ValueError("Slice contains non-finite intensity values.")

@@ -150,3 +150,41 @@ def test_memory_budget_rejects_slice(tmp_path, monkeypatch):
     monkeypatch.setattr(psutil, "virtual_memory", lambda: SimpleNamespace(available=1))
     with pytest.raises(MemoryError, match="memory budget"):
         read_slice(load_volume(path), 2, 3)
+
+
+def test_meter_units_do_not_allow_near_voxel_translation(tmp_path):
+    affine = np.diag([0.001, 0.001, 0.002, 1])
+    scan_path, _ = write_image(tmp_path, affine=affine)
+    scan = load_volume(scan_path)
+    scan.header.set_xyzt_units("meter")
+    affine[0, 3] += 0.0009
+    mask_path, _ = write_image(tmp_path, "mask.nii", affine=affine)
+    mask = load_volume(mask_path)
+    mask.header.set_xyzt_units("meter")
+    with pytest.raises(ValueError, match="geometry"):
+        check_geometry(scan, mask)
+
+
+def test_proxy_read_ahead_is_bounded_to_one_storage_plane(tmp_path, monkeypatch):
+    import nibabel.openers
+
+    path, data = write_image(tmp_path, shape=(128, 32, 4))
+    requested_bytes = []
+    original_read = nibabel.openers.Opener.read
+    original_readinto = nibabel.openers.Opener.readinto
+
+    def record_read(self, size=-1):
+        requested_bytes.append(size)
+        return original_read(self, size)
+
+    def record_readinto(self, buffer):
+        requested_bytes.append(len(buffer))
+        return original_readinto(self, buffer)
+
+    image = load_volume(path)
+    monkeypatch.setattr(nibabel.openers.Opener, "read", record_read)
+    monkeypatch.setattr(nibabel.openers.Opener, "readinto", record_readinto)
+    actual = read_slice(image, 0, 64)
+    np.testing.assert_array_equal(actual, data[64, :, :])
+    assert requested_bytes
+    assert 0 < max(requested_bytes) <= 128 * 32 * 2

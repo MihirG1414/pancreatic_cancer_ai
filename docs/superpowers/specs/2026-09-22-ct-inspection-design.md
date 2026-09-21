@@ -17,8 +17,9 @@ milestone 1 must preserve original voxel data and geometry.
 3. Load one `.nii` or `.nii.gz` CT at a time through NiBabel's array proxy.
 4. Report dimensions, header spacing, affine spacing, spatial units, axis codes,
    affine and qform/sform codes without dumping identifying header strings.
-5. Read only requested 2D slices; apply stored intensity scaling. Do not call
-   `get_fdata()` or materialize an entire proxy. Report process and system memory.
+5. Return only requested 2D slices; apply stored intensity scaling. Stream at most
+   one contiguous 2D storage slab at a time when assembling other native planes.
+   Do not call `get_fdata()` or materialize an entire proxy. Report memory snapshots.
 6. Overlay an existing integer label mask only when shape, units, voxel spacing,
    and full voxel-to-world affine agree. Fail clearly on mismatch. Do not repair
    or resample it silently. Geometry agreement alone cannot prove patient identity.
@@ -55,6 +56,8 @@ Inspection found Windows 11 Home Single Language (10.0.26200), Ryzen 5 3500U,
 4.44 GiB free, D: about 458 GiB. Keep scans on D: and install without a pip cache.
 Read slices serially and close figures. Compressed NIfTI may decompress earlier
 bytes on repeated access, so manual slice selection is preferable to animation.
+Code review found proxy slicing can read ahead into an entire volume for some
+shapes; explicit bounded storage-plane reads prevent that hidden allocation.
 Warn when available memory is low; reject oversized individual slice requests.
 
 NIfTI is a container: it does not independently establish modality, CT contrast
