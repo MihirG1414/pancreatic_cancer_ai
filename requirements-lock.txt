@@ -42,9 +42,11 @@ pyzmq==27.2.0
 referencing==0.37.0
 rpds-py==2026.6.3
 ruff==0.16.8
+setuptools==82.0.1
 six==1.17.0
 stack-data==0.6.3
 tornado==6.5.10
 traitlets==5.16.1
 typing_extensions==4.16.0
 wcwidth==0.8.4
+wheel==0.48.0

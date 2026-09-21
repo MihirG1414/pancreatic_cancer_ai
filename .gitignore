@@ -52,5 +52,6 @@ DOC-20260829-WA0025.md
 *.key
 *.log
 *.tmp
+*.part
 Thumbs.db
 Desktop.ini

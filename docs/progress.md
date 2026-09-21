@@ -49,3 +49,43 @@
   Independent review additionally passed 24 comparisons against NiBabel across
   NIfTI-1/2, compressed/uncompressed files, both byte orders, scaling and all axes.
   No remaining important core review blocker was found.
+
+## 2026-09-22 - Real data and notebook validation
+
+- Downloaded exactly one real public MSD Task07 CT and its existing segmentation
+  from the official EU mirror (28,122,090 compressed image/mask bytes, plus small
+  dataset metadata). No full archive or weights downloaded. Data is on D: outside
+  Git. Pinned ETag, TAR headers, exact range/length and gzip CRC checks passed;
+  source/license/time/SHA256 are in the local provenance file.
+- Real scan: 512 x 512 x 97, float32, spacing approximately
+  0.916016 x 0.916016 x 2.5 mm, RAS orientation, qform/sform code 1, zero reported
+  obliquity and no geometry warnings. Existing mask geometry matched.
+- Ran the CLI with the real scan and existing mask; saved a middle-plane PNG.
+  Executed all notebook cells with the real pair and inspected rendered PNGs
+  for all three native middle planes. Images, axis labels and annotation legends
+  rendered correctly. This is a visual software check, not clinical review.
+- Also executed the complete real-data notebook with the optional mask omitted;
+  it displayed CT-only planes successfully. Recomputed all downloaded-file
+  SHA256 hashes after inspection; they match the acquisition provenance.
+- Notebook RSS snapshots: 92.1 MiB before loading, 92.8 after headers, then
+  100.1 / 104.9 / 113.1 after the three displayed planes. System available memory
+  snapshots ranged approximately 692-824 MiB during plotting. These are not peak
+  memory measurements. Full-volume caches remained empty.
+- Executed notebook and figures stay under ignored `outputs/`. The tracked
+  notebook has no outputs or execution counts. Jupyter emitted Windows event-loop
+  fallback and local TCP transport warnings; execution completed successfully.
+- No data-access blocker remains for this sample. Broader PANORAMA inference,
+  GPU access, weights, train/test overlap analysis, clinical validation, and all
+  prediction/performance claims remain deferred and untested. No inference code
+  is integrated. The supplied statement's wider deliverable is not yet complete.
+- Session commits so far: `4f17cb6` environment/specification, `f2f4775` CT loading
+  and overlays, `ceb7bbf` bounded-read and geometry-unit fixes. Final notebook,
+  downloader and documentation commit follows final checks, then routine push.
+- Final checks: 55 tests passed; Ruff lint and formatting passed; `pip check`
+  reported no broken dependencies; locked-requirement dry run required no changes.
+  Validated output-free notebook schema and Git exclusions. Code-review fixes
+  passed independent review. No standalone type checker is configured.
+- The first three commits pushed successfully to `origin/milestone-1-ct-inspection`.
+  The final notebook/data-access documentation commit will use the same routine
+  push. Next session: plan pretrained PANORAMA inference and suitable GPU access;
+  this completed intake milestone does not validate the wider screening system.
