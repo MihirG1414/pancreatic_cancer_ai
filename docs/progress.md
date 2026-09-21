@@ -19,3 +19,19 @@
   supplied problem statement stays local; committed specification summarizes scope.
 - Next: implement tested lazy loading and plotting; retrieve one real public case
   with a bounded download; execute the notebook; review and push checked commits.
+
+## 2026-09-22 - Lazy loading and visualisation
+
+- Added typed volume, CSV, plotting and CLI modules. Metadata omits identifying
+  free-text headers; native geometry stays intact; only individual scaled slices
+  are read. Existing labels are checked against shape, units, spacing and affine.
+- 36 synthetic software checks passed, including `.nii`/`.nii.gz`, intensity
+  scaling, corrupted payloads, no full-proxy conversion, low-memory behavior,
+  mask mismatch refusal, CSV validation, plotting and CLI success/failure.
+  Ruff passed on this implementation. No clinical/model performance is tested.
+- Editable installation initially failed because the preinstalled environment
+  build backend lacked `wheel`. Added explicit setuptools/wheel development
+  dependencies, retried successfully and refreshed the dependency lock.
+- Environment/core import check: about 611 MiB system memory available and
+  4.14 GiB free on C: after installation. These are time-specific snapshots.
+- Next: complete bounded public sample acquisition and real notebook verification.

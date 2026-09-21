@@ -3,3 +3,5 @@ pytest>=8,<10
 ruff>=0.9,<1
 nbformat>=5.10,<6
 nbclient>=0.10,<1
+setuptools>=68,<83
+wheel>=0.45,<1
