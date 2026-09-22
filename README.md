@@ -1,5 +1,9 @@
 # Mirai - pancreatic CT inspection for Rises.io
 
+**Resuming after an interruption?** Read [PROGRESS.md](PROGRESS.md) first. It
+records completed work, checks, unresolved issues and the exact next step.
+[AGENTS.md](AGENTS.md) makes the resume and milestone-update rules persistent.
+
 Milestone 1: native Windows, CPU-only loading and visualisation of one NIfTI CT
 at a time. **No model runs, predictions, training or clinical validation.**
 The broader project will use the pretrained
@@ -139,7 +143,7 @@ git status --short
 
 Tests generate tiny **synthetic arrays in temporary directories** solely to
 check software. Real scan inspection is recorded separately in the
-[progress log](docs/progress.md). Neither establishes cancer-detection accuracy.
+[progress record](PROGRESS.md). Neither establishes cancer-detection accuracy.
 
 Scan files, weights, local CSVs, reports, credentials and `.venv` are ignored.
 The original supplied problem statement stays local. **Clear notebook outputs

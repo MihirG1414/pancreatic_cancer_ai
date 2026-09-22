@@ -1,5 +1,10 @@
 # Progress log
 
+Historical milestone 1 evidence. For the current checkpoint, resume procedure,
+unresolved issues and exact next step, read [root PROGRESS.md](../PROGRESS.md).
+The final milestone 1 commit was `bfda5c9`; all four implementation commits were
+pushed successfully. Future updates belong in the root record.
+
 ## 2026-09-22 - CPU environment and specification
 
 - Read the supplied problem statement; scoped this session to CT intake and
