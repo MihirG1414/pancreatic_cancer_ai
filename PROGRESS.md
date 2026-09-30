@@ -2,7 +2,7 @@
 
 Updated: 2026-09-30 (Asia/Calcutta). This is the authoritative current handoff.
 
-## Milestone 2 implementation verified; delivery pending (2026-09-30)
+## Milestone 2 completed (2026-09-30)
 
 The user authorized a second milestone: verify official PANORAMA inference requirements,
 then implement and run a local CPU annotation report and demo. Initial Git review found
@@ -28,11 +28,16 @@ voxels. These are dataset annotations, not predictions.
 Full local verification: **63 pytest tests passed**, `ruff check .` passed,
 `ruff format --check src tests scripts` reported 14 files formatted,
 `pip check` found no broken requirements, and `git diff --check` passed.
-HTML text and three PNGs were checked. The original modified notebook remains
-unstaged and its existing kernel untouched. Exact next action: review/stage
-only milestone files, commit in meaningful groups, push this branch, compare
-remote HEAD, then record delivery result. GPU/weight permissions, runtime
-requirements and model outputs remain unverified.
+HTML text and three PNGs were checked. Planning and implementation were
+committed as `71ea725` and `ff22e1f`. `git push origin milestone-1-ct-inspection`
+succeeded; `git ls-remote` and local `HEAD` both reported full hash
+`ff22e1f08450647c58a20862300f8c95c12648d3` immediately afterward.
+The original modified notebook remains unstaged and its existing kernel
+untouched.
+GPU/weight permissions, runtime requirements and model outputs remain unverified.
+Exact next technical action: confirm authorized pretrained weights and a
+suitable Colab/company GPU, then perform the one-case pilot in
+`docs/panorama-inference-plan.md` after checking CT format/geometry and source overlap.
 
 Earlier detailed evidence is preserved in [the milestone 1 history](docs/progress.md).
 
@@ -46,9 +51,9 @@ Earlier detailed evidence is preserved in [the milestone 1 history](docs/progres
   Documentation links and handoff fields verified; Git whitespace and Ruff checks passed.
 - **Not started:** PANORAMA inference. No model weights, CUDA, training, predictions
   or disease-performance evaluation have been introduced.
-- **Milestone 2 verified locally:** PANORAMA source/weight/license review and one
-  CPU dataset annotation report on the existing public case. Delivery pending
-  until the new commits are pushed and remote HEAD verified.
+- **Milestone 2 complete:** PANORAMA source/weight/license review and one CPU
+  dataset annotation report on the existing public case. The two related
+  commits were pushed and remote HEAD verified; this closure update follows.
 - **Exact next technical action after delivery:** obtain permitted pretrained
   weights and suitable Colab/company NVIDIA GPU access for one-case pilot,
   confirm source overlap and preserve geometry in input conversion.
@@ -62,6 +67,7 @@ Earlier detailed evidence is preserved in [the milestone 1 history](docs/progres
 | Review fixes (`ceb7bbf`) | Bounded storage-slab reads; mask geometry comparisons in millimeters | Failing regressions then passing fixes; independent format/endian/scaling comparisons | Geometry agreement alone cannot establish patient identity |
 | Real-data workflow (`bfda5c9`) | Downloaded one public MSD CT/mask pair; created and executed notebook; documented Windows commands | 55 tests total; lint/format/dependencies; real notebook with and without mask; visual inspection; unchanged file hashes | One-case software check is not cancer-detection validation |
 | Resume documentation (2026-09-22; find commit in Git log) | Added root handoff and persistent agent rules; linked README; preserved historical log | Reviewed clean initial Git state, recent commits and remote head; inspected running processes; checked local Markdown links, required handoff fields and whitespace | Existing notebook kernel left untouched; future GPU/runtime and inference planning still pending |
+| Milestone 2 (2026-09-30; `71ea725`, `ff22e1f`) | Source-checked PANORAMA inference plan; local CPU annotation report and demo | 63 tests; Ruff lint/format; pip check; real-case three-view inspection; counts, slice and source-hash checks; pushed commits through `ff22e1f` and matched remote HEAD | GPU access, weight/use permissions, genuine model outputs, independent evaluation and explanation remain open |
 
 Ruff also passed during this documentation milestone. The 55-test result above belongs to
 milestone 1; the real scan and notebook were not rerun merely to update documents.
