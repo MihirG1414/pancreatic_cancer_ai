@@ -5,10 +5,13 @@ records completed work, checks, unresolved issues and the exact next step.
 [AGENTS.md](AGENTS.md) makes the resume and milestone-update rules persistent.
 
 Milestone 1: native Windows, CPU-only loading and visualisation of one NIfTI CT
-at a time. **No model runs, predictions, training or clinical validation.**
+at a time. Milestone 2 adds an annotation-only local case report and a
+[source-checked PANORAMA inference plan](docs/panorama-inference-plan.md).
+**No model runs, predictions, training or clinical validation.**
 The broader project will use the pretrained
 [official PANORAMA baseline](https://github.com/DIAGNijmegen/PANORAMA_baseline);
 inference is deferred until this intake milestone is checked and compute is available.
+The next step is the permitted one-case GPU pilot described in the plan.
 
 The implementation follows the supplied problem statement and the
 [milestone specification](docs/superpowers/specs/2026-09-22-ct-inspection-design.md).
@@ -131,7 +134,20 @@ array axes; these are not standardized axial/coronal/sagittal radiological views
 Oblique/sheared geometry needs special interpretation. Physical aspect ratio
 uses affine voxel sizes, without interpolation or full-volume conversion.
 
-## 5. Run checks and keep Git clean
+## 5. Run the report, checks and keep Git clean
+
+For the second milestone, generate and open a local report from the existing
+manifest. Use a new output directory on each run:
+
+```powershell
+$reportDir = ".\outputs\pancreas-290-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+.\.venv\Scripts\python.exe -m mirai_ct.report --manifest .\cases.local.csv --case-id pancreas_290 --output $reportDir
+Invoke-Item -LiteralPath "$reportDir\index.html"
+```
+
+See the [milestone 2 demo guide](docs/milestone-2-demo.md) for report meanings,
+verified sample values and remaining GPU work. All measurements come from the
+supplied dataset annotation; none are model predictions.
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q

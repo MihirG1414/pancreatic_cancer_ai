@@ -1,6 +1,39 @@
 # Mirai / Rises.io - resume record
 
-Updated: 2026-09-22 (Asia/Calcutta). This is the authoritative current handoff.
+Updated: 2026-09-30 (Asia/Calcutta). This is the authoritative current handoff.
+
+## Milestone 2 implementation verified; delivery pending (2026-09-30)
+
+The user authorized a second milestone: verify official PANORAMA inference requirements,
+then implement and run a local CPU annotation report and demo. Initial Git review found
+`eb2f5c5` at local and remote branch head. The tracked inspection notebook has saved
+outputs from a pre-existing local run and is modified; preserve and exclude it from
+milestone commits. An existing VS Code notebook kernel remains running and untouched.
+The real CT/mask pair, manifest and ignored inspection outputs remain present.
+No inference has run.
+
+2026-09-30 check: reviewed official PANORAMA source at `d08f235`, Zenodo archive
+sizes and separate CC BY-NC 4.0 license; wrote `docs/panorama-inference-plan.md`.
+The report implementation passed 8 new synthetic tests. Memory snapshot before
+the real case: 671.8 MiB available. The case report generated under ignored
+`outputs/`, with three native-axis PNGs visually inspected. The real CT was
+512 × 512 × 97 RAS, spacing about 0.916 × 0.916 × 2.5 mm, and the mask
+geometry matched without warnings. Source CT/mask SHA256 hashes still match
+the recorded acquisition provenance. Annotation label 1: 29,162 voxels,
+61.1735 mL, bounds [149, 248, 26]–[280, 309, 59]. Annotation label 2:
+3,521 voxels, 7.3860 mL, bounds [246, 275, 37]–[283, 303, 44]. Counts sum
+to 25,427,968 voxels, the exact CT voxel count; slice 40 contains 633 label-2
+voxels. These are dataset annotations, not predictions.
+
+Full local verification: **63 pytest tests passed**, `ruff check .` passed,
+`ruff format --check src tests scripts` reported 14 files formatted,
+`pip check` found no broken requirements, and `git diff --check` passed.
+HTML text and three PNGs were checked. The original modified notebook remains
+unstaged and its existing kernel untouched. Exact next action: review/stage
+only milestone files, commit in meaningful groups, push this branch, compare
+remote HEAD, then record delivery result. GPU/weight permissions, runtime
+requirements and model outputs remain unverified.
+
 Earlier detailed evidence is preserved in [the milestone 1 history](docs/progress.md).
 
 ## Current checkpoint
@@ -13,11 +46,12 @@ Earlier detailed evidence is preserved in [the milestone 1 history](docs/progres
   Documentation links and handoff fields verified; Git whitespace and Ruff checks passed.
 - **Not started:** PANORAMA inference. No model weights, CUDA, training, predictions
   or disease-performance evaluation have been introduced.
-- **Exact next technical action:** prepare the planning-only PANORAMA inference
-  document described below. Inference execution is outside this documentation milestone.
-- **Delivery checkpoint:** documentation is ready to commit and push. On resume,
-  inspect Git and remote HEAD to determine whether delivery finished; do not
-  repeat these edits because this pre-commit checkpoint says delivery was pending.
+- **Milestone 2 verified locally:** PANORAMA source/weight/license review and one
+  CPU dataset annotation report on the existing public case. Delivery pending
+  until the new commits are pushed and remote HEAD verified.
+- **Exact next technical action after delivery:** obtain permitted pretrained
+  weights and suitable Colab/company NVIDIA GPU access for one-case pilot,
+  confirm source overlap and preserve geometry in input conversion.
 
 ## Completed work and evidence
 
@@ -76,15 +110,12 @@ is uncertain, compare `git rev-parse HEAD` with
 `git ls-remote origin refs/heads/milestone-1-ct-inspection`; do not assume local
 remote-tracking information is current.
 
-## Next technical milestone - planning only
+## Next technical milestone - GPU pilot
 
-**Exact next step after this documentation milestone:** read the local problem
-statement and existing scope, inspect the official PANORAMA baseline's current
-inference code/configuration, and write `docs/panorama-inference-plan.md`.
-Record the required input/preprocessing, actual model outputs, dependency and
-weight sizes, licensing, compute requirements, data-overlap risks, and one-case
-acceptance checks. Do not install inference frameworks or download weights as
-part of that planning step.
+The PANORAMA source review is now in `docs/panorama-inference-plan.md`. The next
+technical step is to confirm permitted weights/data and a suitable Colab or
+company NVIDIA GPU runtime, then run its documented one-case pilot. Do not
+infer performance from this milestone's dataset annotation report.
 
 Then proceed in small milestones:
 
