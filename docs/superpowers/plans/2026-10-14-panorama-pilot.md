@@ -36,5 +36,5 @@ Execute inline in the authorized existing branch. Review before delivery.
   fixture for manual view verification. Never save synthetic results as real.
 - [x] Write `docs/milestone-3-demo.md`, update README/progress. Run full pytest,
   Ruff lint/format, pip check, whitespace/notebook-output/privacy checks.
-- [ ] Review complete diff, fix findings, commit related groups, push existing
+- [x] Review complete diff, fix findings, commit related groups, push existing
   branch and compare remote/local head. Record genuine GPU blocker/next action.

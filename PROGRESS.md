@@ -101,8 +101,14 @@ Windows import/report commands. GPU compatibility (including the documented
 scikit-image wheel adaptation), actual runtime/peaks, real prediction alignment,
 input suitability, license permission for commercial company use and dataset
 independence remain unverified. No disease accuracy or clinical risk is claimed.
-Remaining session delivery action: commit the verified importer/notebook/demo,
-push the existing branch and compare the actual remote head.
+Delivery verification: commits `cb255cc`, `13e112c`, `1157be0` and `4398779`
+were pushed to existing `origin/milestone-1-ct-inspection`. Local and actual
+remote HEAD both matched `4398779c7cf67b893845dd08e36ea73b548fd277`.
+The notebook's immutable runner source URL was fetched from GitHub and matched
+the local reviewed runner. Only the pre-existing inspection notebook remained
+modified and unstaged. This closure update records that verification; push and
+remote-check it as the final delivery commit. Exact next technical action remains
+the nine-cell free Colab smoke test, followed by genuine output import/report.
 
 ## Milestone 2 completed (2026-09-30)
 
@@ -174,6 +180,7 @@ Earlier detailed evidence is preserved in [the milestone 1 history](docs/progres
 | Real-data workflow (`bfda5c9`) | Downloaded one public MSD CT/mask pair; created and executed notebook; documented Windows commands | 55 tests total; lint/format/dependencies; real notebook with and without mask; visual inspection; unchanged file hashes | One-case software check is not cancer-detection validation |
 | Resume documentation (2026-09-22; find commit in Git log) | Added root handoff and persistent agent rules; linked README; preserved historical log | Reviewed clean initial Git state, recent commits and remote head; inspected running processes; checked local Markdown links, required handoff fields and whitespace | Existing notebook kernel left untouched; future GPU/runtime and inference planning still pending |
 | Milestone 2 (2026-09-30; `71ea725`, `ff22e1f`) | Source-checked PANORAMA inference plan; local CPU annotation report and demo | 63 tests; Ruff lint/format; pip check; real-case three-view inspection; counts, slice and source-hash checks; pushed commits through `ff22e1f` and matched remote HEAD | GPU access, weight/use permissions, genuine model outputs, independent evaluation and explanation remain open |
+| Milestone 3 integration (2026-10-14; `cb255cc`, `13e112c`, `1157be0`, `4398779`) | CT-only MHA export, pinned five-fold GPU runner/Colab notebook, output importer, separate report panels and demo | 119 tests; Ruff lint/format; pip check; real conversion with zero measured corner/sample errors; original CT/mask hashes; real unavailable-prediction report and synthetic view checks; review fixes; push/remote/source-pin verification | Real GPU execution and compatibility pending; metadata/input suitability, overlap, independent validation and company weight permission unresolved |
 
 Ruff also passed during this documentation milestone. The 55-test result above belongs to
 milestone 1; the real scan and notebook were not rerun merely to update documents.
@@ -223,12 +230,13 @@ is uncertain, compare `git rev-parse HEAD` with
 `git ls-remote origin refs/heads/milestone-1-ct-inspection`; do not assume local
 remote-tracking information is current.
 
-## Next technical milestone - GPU pilot
+## Next technical action - execute the prepared GPU pilot
 
-The PANORAMA source review is now in `docs/panorama-inference-plan.md`. The next
-technical step is to confirm permitted weights/data and a suitable Colab or
-company NVIDIA GPU runtime, then run its documented one-case pilot. Do not
-infer performance from this milestone's dataset annotation report.
+The source review is in `docs/panorama-inference-plan.md`; executable preparation
+and the exact nine-cell Colab handoff are in `docs/milestone-3-demo.md`. Input
+conversion and output-import code are already implemented and locally tested.
+Connect an authorized suitable NVIDIA runtime and execute the notebook with the
+existing CT export. Do not infer model performance from local software checks.
 
 Then proceed in small milestones:
 
