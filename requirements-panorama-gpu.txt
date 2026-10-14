@@ -1,0 +1,28 @@
+# Separate Python 3.11 GPU environment only. No laptop installation.
+# Numerical packages follow official build.log, with one documented wheel adaptation.
+torch==2.4.0
+numpy==1.24.4
+scipy==1.10.1
+SimpleITK==2.4.0
+nibabel==5.1.0
+report-guided-annotation==0.2.7
+scikit-image==0.21.0
+dynamic-network-architectures==0.3.1
+acvl-utils==0.2
+batchgenerators==0.25
+batchgeneratorsv2==0.2.1
+connected-components-3d==3.18.0
+dicom2nifti==2.4.11
+imagecodecs==2024.6.1
+scikit-learn==1.5.1
+pandas==2.2.2
+matplotlib==3.9.2
+seaborn==0.13.2
+psutil==6.0.0
+sympy==1.13.2
+fft-conv-pytorch==1.2.0
+pydicom==2.4.4
+pillow==9.4.0
+tifffile==2024.8.10
+einops==0.8.0
+nnunetv2 @ git+https://github.com/MIC-DKFZ/nnUNet.git@834b80ffa8517e6cd2981982eb7edc75b2d131d8

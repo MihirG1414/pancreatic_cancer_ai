@@ -37,6 +37,21 @@ browsers/apps, so no authenticated Colab GPU can currently be controlled here.
 Exact next action: implement source-pinned Docker-free notebook/runner, then
 output import/report; user will need to connect a free Colab GPU runtime.
 
+2026-10-14 GPU runner checkpoint: 13 new orchestration contract tests passed;
+combined export/runner tests 21 passed. Tests cover five-fold commands, all ten
+checkpoints, checksum/ZIP safety, empty or invalid pancreas masks, invalid crops,
+and stage physical-grid mismatch. Resolved 77 pinned distributions for Linux
+x86_64/Python 3.11 with uv 0.8.22, without installing GPU packages or weights.
+This checks dependency resolution, not GPU execution/model compatibility.
+Zenodo API independently confirms archive checksums/sizes and LICENSE.txt size
+19,917 bytes. The source runner calls unchanged baseline helpers. Numerical
+version adaptation is documented (scikit-image 0.21.0 vs build-log 0.19.3).
+Laptop preflight failed because nvidia-smi is absent, as expected on this hardware.
+During small synthetic tests Windows free memory dropped below 512 MiB and the
+existing loader emitted its memory warning; no full scan was loaded in those tests.
+Exact next action: create cleared notebook pinned to this runner checkpoint,
+then implement/test output import and reporting. Genuine GPU run remains pending.
+
 ## Milestone 2 completed (2026-09-30)
 
 The user authorized a second milestone: verify official PANORAMA inference requirements,
