@@ -1,6 +1,41 @@
 # Mirai / Rises.io - resume record
 
-Updated: 2026-09-30 (Asia/Calcutta). This is the authoritative current handoff.
+Updated: 2026-10-14 (Asia/Calcutta). This is the authoritative current handoff.
+
+## Milestone 3 in progress (2026-10-14)
+
+Actual resume review: local HEAD `a072ba0`, branch
+`milestone-1-ct-inspection`; only pre-existing inspection notebook outputs are
+modified. Reviewed Git diffs/remotes/recent commits, existing artifacts,
+processes, problem statement, loader/manifest/report and official baseline.
+Preserve that notebook and unrelated processes. No inference has run.
+
+User selected free Colab and confirmed no verified phase/HU/clinical metadata.
+These stay unknown; use the public case only as a software smoke test, with
+unresolved training overlap. Baseline remains at
+`d08f2356fa70d9460881fec0aedba4ebd1566c7e`. Build log gives nnU-Net 2.5.1,
+torch 2.4.0, SimpleITK 2.4.0 and report-guided-annotation 0.2.7.
+SimpleITK 2.4.0 installed without dependencies into ignored
+`outputs/panorama-io`, leaving existing environment packages unchanged.
+Initial free RAM about 1.24 GiB; recheck before conversion.
+
+Exact next action: implement/test streamed CT-only MHA export with independent
+RAS/LPS geometry and intensity checks, then GPU notebook and prediction import.
+
+2026-10-14 input checkpoint: eight new geometry/export tests passed, including
+rotated/reflected anisotropic geometry, translation, scaling and spatial units;
+full suite **71 passed**. Ruff/whitespace checks passed. Real public case exported
+to ignored `outputs/milestone-3-input`: 512 x 512 x 97; spacing
+0.9160159826 x 0.9160159826 x 2.5 mm; LPS origin
+[468.08416748, 468.08416748, 0], direction diag(-1,-1,+1).
+Independent SimpleITK read found zero maximum physical-corner error and zero
+error across 27 representative scaled-intensity samples. Source hash unchanged.
+Memory snapshots: before RSS 59.8 MiB/free 1369.2 MiB; after RSS 159.5 MiB/free
+1241.2 MiB (not peaks); conservative IO budget 419 MiB. Export did not read mask.
+No models/weights/CUDA installed on laptop. Browser inventory returned no enabled
+browsers/apps, so no authenticated Colab GPU can currently be controlled here.
+Exact next action: implement source-pinned Docker-free notebook/runner, then
+output import/report; user will need to connect a free Colab GPU runtime.
 
 ## Milestone 2 completed (2026-09-30)
 

@@ -1,0 +1,3 @@
+# Optional independent MHA reader; install with --target outputs/panorama-io.
+# Core CT inspection/reporting remains unchanged.
+SimpleITK==2.4.0
