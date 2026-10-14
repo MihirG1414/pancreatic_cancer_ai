@@ -110,3 +110,34 @@ def test_stage_output_geometry_and_preflight_failure(tmp_path, monkeypatch):
     )
     with pytest.raises(ValueError, match="resource gate"):
         preflight(tmp_path)
+
+
+def test_reused_extracted_model_must_match_verified_archive(tmp_path):
+    from mirai_ct.panorama_runtime import verify_extracted
+
+    archive = tmp_path / "model.zip"
+    with zipfile.ZipFile(archive, "w") as z:
+        z.writestr("Dataset/checkpoint.pth", b"official fixture")
+    root = tmp_path / "models"
+    (root / "Dataset").mkdir(parents=True)
+    checkpoint = root / "Dataset/checkpoint.pth"
+    checkpoint.write_bytes(b"official fixture")
+    assert (
+        verify_extracted(archive, root)["Dataset/checkpoint.pth"]
+        == hashlib.sha256(b"official fixture").hexdigest()
+    )
+    checkpoint.write_bytes(b"changed nonempty checkpoint")
+    with pytest.raises(ValueError, match="archive"):
+        verify_extracted(archive, root)
+
+
+def test_crop_host_budget_refuses_oversized_case(monkeypatch):
+    from mirai_ct.panorama_runtime import require_crop_memory
+
+    monkeypatch.setattr(
+        "mirai_ct.panorama_runtime.psutil.virtual_memory",
+        lambda: type("RAM", (), {"available": 8 * 1024**3})(),
+    )
+    require_crop_memory((512, 512, 97), (240, 180, 50))
+    with pytest.raises(MemoryError, match="crop"):
+        require_crop_memory((1024, 1024, 1000), (1024, 1024, 1000))

@@ -96,3 +96,33 @@ def test_export_refuses_unsafe_inputs(tmp_path, monkeypatch, problem):
     with pytest.raises((ValueError, MemoryError)):
         export_case(Case("fixture", path, None, "synthetic"), output)
     assert not (output / "input-provenance.json").exists()
+
+
+def test_aligned_mha_reader_checks_header_and_memory_before_allocation(tmp_path, monkeypatch):
+    from mirai_ct.cases import Case
+    from mirai_ct.panorama_io import export_case, geometry, read_aligned_mha
+    from mirai_ct.volume import load_volume
+
+    path, _, _ = make_scan(tmp_path)
+    export_case(Case("fixture", path, None, "synthetic"), tmp_path / "export")
+    grid = geometry(load_volume(path))
+    mha = tmp_path / "export/ct.mha"
+    image = read_aligned_mha(mha, grid)
+    assert image.GetSize() == (7, 9, 5)
+    with pytest.raises(ValueError, match="dimensions"):
+        read_aligned_mha(mha, {**grid, "shape_ijk": [70, 90, 50]})
+    monkeypatch.setattr("mirai_ct.panorama_io.available_bytes", lambda: 1)
+    with pytest.raises(MemoryError):
+        read_aligned_mha(mha, grid)
+
+
+def test_external_metaimage_payload_is_rejected_before_reader_allocation(tmp_path):
+    from mirai_ct.panorama_io import read_aligned_mha
+
+    path = tmp_path / "external.mha"
+    path.write_text(
+        "ObjectType = Image\nNDims = 3\nDimSize = 2 2 2\n"
+        "ElementType = MET_FLOAT\nElementDataFile = scan.raw\n"
+    )
+    with pytest.raises(ValueError, match="LOCAL"):
+        read_aligned_mha(path, {"shape_ijk": [2, 2, 2]})

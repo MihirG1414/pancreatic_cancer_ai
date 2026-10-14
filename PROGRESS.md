@@ -52,6 +52,25 @@ existing loader emitted its memory warning; no full scan was loaded in those tes
 Exact next action: create cleared notebook pinned to this runner checkpoint,
 then implement/test output import and reporting. Genuine GPU run remains pending.
 
+2026-10-14 integration/review checkpoint: local full suite **119 passed**;
+Ruff lint/format, pip check and Git whitespace checks passed. The Colab notebook
+has cleared outputs and schema/syntax checks (including embedded subprocess
+scripts); its GPU cells have not been executed. Import tests use explicitly
+synthetic temporary fixtures, including rotation/reflection/translation,
+source scaling, wrong geometry, checksum tampering, invalid JSON/range/maximum,
+missing outputs and separate display panels. No synthetic fixture was applied
+to the real sample or reported as a model run.
+
+Read-only code review found model archive-to-extracted-file integrity, per-case
+GPU IO budgets, and external MHA payload hashing gaps. Added failing regressions
+and fixes: verify extracted bytes against published-checksum archives; recheck
+expected checkpoint/plan hashes before inference; inspect MHA headers and RAM
+before allocation; require embedded LOCAL payloads; check crop probability/
+postprocessing budget and saved-map voxel equality. Tests now cover these.
+Notebook runner pin must be advanced to the reviewed correction commit before
+delivery. Exact next action: finish real unavailable-prediction report/manual
+synthetic view checks, demo guide, final commits and push; GPU pilot still pending.
+
 ## Milestone 2 completed (2026-09-30)
 
 The user authorized a second milestone: verify official PANORAMA inference requirements,

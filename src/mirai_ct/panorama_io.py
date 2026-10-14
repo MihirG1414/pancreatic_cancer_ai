@@ -133,6 +133,40 @@ def validate_alignment(image: Any, expected: dict[str, Any]) -> dict[str, float]
     return {"max_corner_error_mm": maximum}
 
 
+def require_local_mha(path: Path) -> None:
+    """Only embedded MHA payloads are covered by a single recorded file hash."""
+    with path.open("rb") as stream:
+        read_bytes = 0
+        while read_bytes < 64 * 1024:
+            line = stream.readline(4096)
+            read_bytes += len(line)
+            if not line:
+                break
+            if line.strip().startswith(b"ElementDataFile"):
+                if line.strip() != b"ElementDataFile = LOCAL":
+                    raise ValueError("MHA must embed its voxel payload: ElementDataFile = LOCAL.")
+                return
+    raise ValueError("Missing/bounded MHA header: expected ElementDataFile = LOCAL.")
+
+
+def read_aligned_mha(path: Path, grid: dict) -> Any:
+    """Check embedded payload, scalar header, dimensions and RAM before reading."""
+    require_local_mha(path)
+    sitk = simpleitk()
+    reader = sitk.ImageFileReader()
+    reader.SetFileName(str(path))
+    reader.ReadImageInformation()
+    if reader.GetDimension() != 3 or reader.GetNumberOfComponents() != 1:
+        raise ValueError("Detection/input MHA must be scalar 3D.")
+    if list(reader.GetSize()) != grid["shape_ijk"]:
+        raise ValueError("Physical alignment failed: MHA dimensions mismatch.")
+    require_memory(tuple(reader.GetSize()))
+    reader.SetOutputPixelType(sitk.sitkFloat32)
+    image = reader.Execute()
+    validate_alignment(image, grid)
+    return image
+
+
 def _write_mha(scan: Volume, destination: Path, grid: dict[str, Any]) -> None:
     # MetaImage serializes direction columns; SimpleITK GetDirection uses rows.
     direction_columns = np.array(grid["direction_lps_row_major"]).reshape(3, 3).T.ravel()

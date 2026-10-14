@@ -8,6 +8,7 @@ import argparse
 import hashlib
 import importlib.metadata
 import json
+import math
 import os
 import shutil
 import stat
@@ -26,6 +27,7 @@ import psutil
 
 from mirai_ct.panorama_io import (
     CLINICAL_FIELDS,
+    read_aligned_mha,
     sha256_file,
     simpleitk,
     sitk_affine_lps,
@@ -131,6 +133,32 @@ def safe_extract(archive: Path, destination: Path) -> None:
         zipped.extractall(destination)
 
 
+def verify_extracted(archive: Path, destination: Path) -> dict[str, str]:
+    """Tie every reused/extracted file to the checksum-verified archive bytes."""
+    hashes = {}
+    with zipfile.ZipFile(archive) as zipped:
+        for member in zipped.infolist():
+            if member.is_dir():
+                continue
+            path = (destination / member.filename).resolve()
+            if not path.is_relative_to(destination.resolve()):
+                raise ValueError("Unsafe archive member path.")
+            if not path.is_file() or path.stat().st_size != member.file_size:
+                raise ValueError(
+                    "Extracted model differs from verified archive: " + member.filename
+                )
+            digest = hashlib.sha256()
+            with zipped.open(member) as stream:
+                for block in iter(lambda: stream.read(1024 * 1024), b""):
+                    digest.update(block)
+            if digest.hexdigest() != sha256_file(path):
+                raise ValueError(
+                    "Extracted model differs from verified archive: " + member.filename
+                )
+            hashes[member.filename] = digest.hexdigest()
+    return hashes
+
+
 def _download(url: str, destination: Path, md5: str, size: int) -> None:
     if destination.exists():
         verify_archive(destination, md5, size)
@@ -160,7 +188,7 @@ def prepare_weights(root: Path, permitted: bool) -> Path:
         "bd06674082883348303979bec15d9c2c",
         19917,
     )
-    records = []
+    records, expected_hashes = [], {}
     for stage in STAGES:
         filename = stage["dataset"] + ".zip"
         archive = downloads / filename
@@ -173,6 +201,7 @@ def prepare_weights(root: Path, permitted: bool) -> Path:
         folder = models / stage["dataset"]
         if not folder.exists():
             safe_extract(archive, models)
+        expected_hashes.update(verify_extracted(archive, models))
         records.append(
             {
                 "filename": filename,
@@ -181,7 +210,9 @@ def prepare_weights(root: Path, permitted: bool) -> Path:
                 "sha256": sha256_file(archive),
             }
         )
-    validate_models(models)
+    model_hashes = validate_models(models)
+    if any(value != expected_hashes.get(name) for name, value in model_hashes.items()):
+        raise ValueError("Model files do not match verified archives.")
     write_json(
         root / "weight-provenance.json",
         {
@@ -190,6 +221,7 @@ def prepare_weights(root: Path, permitted: bool) -> Path:
             "permission_confirmed_by_operator": True,
             "archives": records,
             "license_sha256": sha256_file(license_file),
+            "model_sha256": model_hashes,
         },
     )
     return models
@@ -264,6 +296,17 @@ def validate_stage_grid(image: Any, expected_size: tuple, reference: Any) -> Non
         sitk_affine_lps(image), sitk_affine_lps(reference), rtol=0, atol=1e-4
     ):
         raise ValueError("Stage output grid differs from its input physical grid.")
+
+
+def require_crop_memory(full_shape: tuple, crop_shape: tuple) -> int:
+    # Policy headroom includes seven-class probabilities and postprocessing arrays.
+    # Saved-plan activations/true peak remain unknown until measured by the pilot.
+    budget = 1024**3 + math.prod(full_shape) * 12 + math.prod(crop_shape) * 64
+    if psutil.virtual_memory().available < budget:
+        raise MemoryError(
+            f"Insufficient host RAM for crop/probability IO policy: {budget / 1024**3:.2f} GiB."
+        )
+    return budget
 
 
 def _versions() -> dict[str, str]:
@@ -357,6 +400,10 @@ def run_pilot(input_dir: Path, baseline: Path, root: Path, run_dir: Path) -> Pat
         raise ValueError("Baseline source contains local modifications; use the unmodified pin.")
     model_hashes = validate_models(root / "models")
     weights = json.loads((root / "weight-provenance.json").read_text())
+    if weights.get("model_sha256") != model_hashes:
+        raise ValueError("Model files changed after verified archive preparation.")
+    if weights.get("permission_confirmed_by_operator") is not True:
+        raise ValueError("Weight-use permission declaration is missing.")
     provenance = json.loads((input_dir / "input-provenance.json").read_text())
     if provenance.get("annotation_used") is not False:
         raise ValueError("Input must be a CT-only export.")
@@ -385,8 +432,7 @@ def run_pilot(input_dir: Path, baseline: Path, root: Path, run_dir: Path) -> Pat
     from data_utils import CropPancreasROI, GetFullSizDetectionMap, PostProcessing, resample_img
 
     sitk = simpleitk()
-    ct = sitk.ReadImage(str(input_dir / "ct.mha"), sitk.sitkFloat32)
-    validate_alignment(ct, provenance["geometry"])
+    ct = read_aligned_mha(input_dir / "ct.mha", provenance["geometry"])
     run_dir.mkdir(parents=True)
     bundle = run_dir / "bundle"
     bundle.mkdir()
@@ -448,6 +494,9 @@ def run_pilot(input_dir: Path, baseline: Path, root: Path, run_dir: Path) -> Pat
                     validate_pancreas(sitk.GetArrayViewFromImage(mask))
                     crop, coordinates = CropPancreasROI(ct, mask, [100, 50, 15])
                     validate_crop(coordinates, ct.GetSize(), crop.GetSize())
+                    record["crop_host_io_policy_budget_bytes"] = require_crop_memory(
+                        ct.GetSize(), crop.GetSize()
+                    )
                     record["crop_coordinates_ijk_exclusive_finish"] = coordinates
                     sitk.WriteImage(crop, str(run_dir / "input_fullres/scan_0000.nii.gz"))
                     del mask, resampled
@@ -473,8 +522,9 @@ def run_pilot(input_dir: Path, baseline: Path, root: Path, run_dir: Path) -> Pat
             sitk.WriteImage(detection, str(map_dir / "detection_map.mha"))
             write_json(bundle / "pdac-likelihood.json", score)
             # Confirm actual on-disk output, not just an in-memory result.
-            restored = sitk.ReadImage(str(map_dir / "detection_map.mha"))
-            validate_alignment(restored, provenance["geometry"])
+            restored = read_aligned_mha(map_dir / "detection_map.mha", provenance["geometry"])
+            if not np.array_equal(sitk.GetArrayViewFromImage(restored), values):
+                raise ValueError("Saved detection-map voxels differ from the validated result.")
             shutil.copyfile(input_dir / "input-provenance.json", bundle / "input-provenance.json")
             shutil.copyfile(root / "archives/LICENSE.txt", bundle / "WEIGHTS-LICENSE.txt")
             record["output_sha256"] = {
