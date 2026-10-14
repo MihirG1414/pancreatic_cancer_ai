@@ -1,4 +1,4 @@
-"""Local, annotation-only case report; never runs model inference."""
+"""Local annotation and optional imported-prediction report; never runs inference."""
 
 # HTML copy stays on complete lines for review alongside the generated report.
 # ruff: noqa: E501
@@ -67,7 +67,13 @@ def _name(label_id: int, source: str) -> str:
 
 
 def _report_html(
-    case: Case, scan: Volume, rows: list[dict], has_mask: bool, indices: list[int]
+    case: Case,
+    scan: Volume,
+    rows: list[dict],
+    has_mask: bool,
+    indices: list[int],
+    prediction_info: dict | None = None,
+    prediction_indices: list[int] | None = None,
 ) -> str:
     info = metadata(scan)
     source = html.escape(case.dataset_source)
@@ -99,11 +105,40 @@ def _report_html(
         f"<figcaption>Native axis {axis}, zero-based slice {indices[axis]}</figcaption></figure>"
         for axis in range(3)
     )
+    prediction_section = "<h2>Model inference</h2><p><strong>Predictions unavailable.</strong> No imported PANORAMA run was supplied to this report.</p>"
+    if prediction_info is not None:
+        run = prediction_info["run"]
+        provenance = html.escape(
+            json.dumps(
+                {
+                    "baseline_revision": run["baseline_revision"],
+                    "nnunet_revision": run["nnunet_revision"],
+                    "folds": run["folds"],
+                    "runtime_seconds": run.get("runtime_seconds"),
+                    "versions": run.get("versions"),
+                    "resource_samples": run.get("resource_samples"),
+                    "source_sha256": prediction_info["source_sha256"],
+                    "suitability": prediction_info["input"]["suitability"],
+                    "training_overlap": "unresolved; software smoke test only",
+                },
+                indent=2,
+            )
+        )
+        prediction_views = "".join(
+            f'<figure><img src="prediction-axis-{axis}.png" alt="CT, separate annotation and PANORAMA candidate map panels">'
+            f"<figcaption>Candidate-map focus: native axis {axis}, zero-based slice {prediction_indices[axis]}</figcaption></figure>"
+            for axis in range(3)
+        )
+        prediction_section = f"""<h2>Imported PANORAMA inference</h2>
+<p><strong>PANORAMA candidate detection map</strong>; patient-level <strong>uncalibrated model score</strong>: {prediction_info["score"]:.6g}.</p>
+<p>The map contains extracted candidate values from the baseline postprocessing. It is not Grad-CAM, a validated tumor segmentation, or a calibrated clinical risk probability. Zero values indicate no retained candidate value; they do not establish absence of disease. The score equals the map maximum. Output hashes and the native physical grid were checked during import; no resampling was used. Provenance is supplied by the run and is not cryptographic proof of execution.</p>
+<p>Existing dataset annotations and model values appear in separate panels and legends. The source annotation never guided model preprocessing, segmentation, crop or detection. Below, three additional views focus on a map maximum (first maximum in native k/i/j order); an all-zero map uses middle slices. This selection is for display only.</p>
+<details><summary>Run provenance and unresolved input suitability</summary><pre>{provenance}</pre></details>{prediction_views}"""
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>Case report: {title}</title>
 <style>body{{font:16px/1.5 system-ui,sans-serif;max-width:1000px;margin:2rem auto;padding:0 1rem;color:#18252b}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #aaa;padding:.4rem;text-align:left}}img{{max-width:100%;height:auto}}figure{{margin:2rem 0}}.notice{{background:#eef5f8;padding:1rem}}</style></head>
 <body><h1>CPU case report: {title}</h1>
-<p class="notice"><strong>Dataset annotation only; not a model prediction, clinical diagnosis, or performance result.</strong> Original CT and annotation files were read without modification.</p>
+<p class="notice"><strong>Dataset annotation measurements are not a model prediction, clinical diagnosis, or performance result.</strong> Original CT and annotation files were read without modification. Model outputs, when imported, are labeled separately.</p>
 <p>Dataset source: {source}</p>
 <h2>CT geometry</h2>
 <p>Dimensions (i, j, k): {info["shape"]} voxels<br>
@@ -118,15 +153,22 @@ qform code: {info["qform_code"]}; sform code: {info["sform_code"]}; obliquity: {
 <p>Bounding boxes use original NIfTI voxel indices (i, j, k), zero-based with both minimum and maximum <strong>inclusive</strong>. They enclose all voxels of each label, including disconnected regions. They are axis-aligned in voxel space; direction letters above indicate increasing indices. These are not head/body/tail assignments.</p>
 <table><thead><tr><th>Label ID</th><th>Meaning</th><th>Voxel count</th><th>Bounding box, inclusive</th><th>Physical volume</th></tr></thead><tbody>{"".join(table_rows) if rows else '<tr><td colspan="5">No annotation supplied</td></tr>'}</tbody></table>
 <h2>Native CT views</h2><p>Each image shows CT and, when supplied, an existing annotation overlay. Planes are original voxel axes, not standardized radiological views. Display level 50/window 400 affects appearance only.</p>{views}
+{prediction_section}
 </body></html>"""
 
 
-def generate_report(case: Case, output: Path) -> Path:
-    """Write one HTML report and three PNGs into a new local directory."""
+def generate_report(case: Case, output: Path, predictions: Path | None = None) -> Path:
+    """Write HTML/native views, plus separate imported-prediction views if supplied."""
     if output.exists():
         raise ValueError("Output directory already exists; choose a new name to preserve it.")
     scan = load_volume(case.scan_path)
     mask = load_volume(case.label_path) if case.label_path is not None else None
+    prediction, prediction_info, prediction_indices = None, None, None
+    if predictions is not None:
+        from mirai_ct.panorama import load_predictions, prediction_focus
+
+        prediction, prediction_info = load_predictions(case, predictions)
+        prediction_indices = prediction_focus(prediction)
     rows = annotation_measurements(scan, mask) if mask is not None else []
     positives = [row for row in rows if row["label_id"] > 0]
     focus = next((row for row in positives if row["label_id"] == 2), None)
@@ -153,25 +195,46 @@ def generate_report(case: Case, output: Path) -> Path:
             figure.savefig(output / f"axis-{axis}.png", dpi=120)
         finally:
             plt.close(figure)
+    if prediction is not None:
+        for axis in range(3):
+            figure = plot_slice(
+                scan, axis=axis, index=prediction_indices[axis], mask=mask, prediction=prediction
+            )
+            try:
+                figure.savefig(output / f"prediction-axis-{axis}.png", dpi=120)
+            finally:
+                plt.close(figure)
     report = output / "index.html"
-    report.write_text(_report_html(case, scan, rows, mask is not None, indices), encoding="utf-8")
+    report.write_text(
+        _report_html(
+            case, scan, rows, mask is not None, indices, prediction_info, prediction_indices
+        ),
+        encoding="utf-8",
+    )
     return report
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="One-case CPU dataset annotation report; no inference."
+        description="One-case local annotation/imported-prediction report; no inference execution."
     )
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--case-id", required=True)
     parser.add_argument("--output", type=Path, required=True, help="New local output directory")
+    parser.add_argument(
+        "--predictions", type=Path, help="Validated local PANORAMA import directory"
+    )
     args = parser.parse_args()
     try:
         matches = [case for case in read_cases(args.manifest) if case.case_id == args.case_id]
         if not matches:
             raise ValueError(f"Case ID not found in manifest: {args.case_id}")
-        report = generate_report(matches[0], args.output)
-        print(json.dumps({"report": str(report), "kind": "dataset annotation; no inference"}))
+        report = generate_report(matches[0], args.output, args.predictions)
+        print(
+            json.dumps(
+                {"report": str(report), "kind": "local annotation/imported prediction report"}
+            )
+        )
         return 0
     except (OSError, ValueError, MemoryError) as exc:
         print(f"Report failed: {exc}", file=sys.stderr)

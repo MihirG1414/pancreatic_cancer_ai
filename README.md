@@ -4,18 +4,18 @@
 records completed work, checks, unresolved issues and the exact next step.
 [AGENTS.md](AGENTS.md) makes the resume and milestone-update rules persistent.
 
-Milestone 1: native Windows, CPU-only loading and visualisation of one NIfTI CT
-at a time. Milestone 2 adds an annotation-only local case report and a
-[source-checked PANORAMA inference plan](docs/panorama-inference-plan.md).
-**No model runs, predictions, training or clinical validation.**
-The broader project will use the pretrained
-[official PANORAMA baseline](https://github.com/DIAGNijmegen/PANORAMA_baseline);
-inference is deferred until this intake milestone is checked and compute is available.
-The next step is the permitted one-case GPU pilot described in the plan.
+Milestone 1 provides CPU CT inspection; Milestone 2 adds annotation reports and a
+[source-checked PANORAMA plan](docs/panorama-inference-plan.md). Milestone 3 adds
+verified CT-only MHA export, a source-pinned Colab GPU notebook, output import
+and separate prediction reporting. **No real model inference has run yet.**
+The [Milestone 3 demo guide](docs/milestone-3-demo.md) gives Windows commands,
+the nine Colab cells and import steps. Next: connect a permitted free Colab GPU,
+run the five-fold pretrained baseline once, and record actual outputs/resources.
 
 The implementation follows the supplied problem statement and the
 [milestone specification](docs/superpowers/specs/2026-09-22-ct-inspection-design.md).
-Original scans are never resampled, cropped, reoriented or overwritten.
+Original scans are never resampled, cropped, reoriented or overwritten. GPU
+inference preprocesses derived working copies using the baseline's saved plans.
 
 ## 1. Open PowerShell in this project
 
@@ -41,7 +41,10 @@ py -3.11 -m venv .venv
 
 `requirements.txt` contains the lightweight runtime; `requirements-dev.txt` adds
 test/notebook-execution/build tools. `requirements-lock.txt` records the exact
-tested environment. No PyTorch, MONAI, CUDA, nnU-Net or model weights are installed.
+tested environment. No PyTorch, MONAI, CUDA, nnU-Net or model weights are installed
+on the laptop. Optional SimpleITK IO is installed separately under ignored
+`outputs/panorama-io`. The `requirements-panorama-gpu*.txt` files are for the
+separate GPU host only.
 
 ## 2. Get one real public CT and existing mask
 
@@ -145,9 +148,12 @@ $reportDir = ".\outputs\pancreas-290-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
 Invoke-Item -LiteralPath "$reportDir\index.html"
 ```
 
-See the [milestone 2 demo guide](docs/milestone-2-demo.md) for report meanings,
-verified sample values and remaining GPU work. All measurements come from the
-supplied dataset annotation; none are model predictions.
+See the [milestone 2 demo guide](docs/milestone-2-demo.md) for annotation meanings
+and verified sample measurements. The report explicitly says predictions are
+unavailable unless a validated import is supplied with `--predictions`.
+The [milestone 3 guide](docs/milestone-3-demo.md) covers CT export, Colab and import.
+Annotation measurements remain dataset-derived; imported detection values use
+separate panels and an uncalibrated score.
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q
@@ -172,15 +178,13 @@ Never force-push, commit patient material or manufacture activity.
 ## Layout and next milestone
 
 - `src/mirai_ct/`: loader/geometry, manifest reader, plotter and CLI.
-- `notebooks/`: output-free inspection notebook.
+- `notebooks/`: inspection and source-pinned Colab inference notebooks.
 - `scripts/`: bounded sample download and local notebook execution.
 - `tests/`: synthetic software checks, no bundled scans.
 - `docs/`: design, plan, data-access instructions and progress evidence.
 - `.venv/`, `outputs/`, `cases.local.csv`: local, ignored.
 
-One month favors a pretrained baseline, not training. After this intake gate,
-verify PANORAMA preprocessing and model licensing, arrange Colab/company GPU
-access, then run a small reproducible inference pilot. Before reporting metrics,
-establish patient-level splits and overlap with baseline training data. No
-inference compute, model output, disease metric or clinical claim is established
-by this milestone.
+The pretrained five-fold integration is prepared for a permitted Colab/company
+NVIDIA GPU pilot. No GPU run, disease metric or clinical claim is established by
+local software tests. Verify phase/HU suitability and independent data overlap
+before any evaluation; the public MSD training sample is only a software smoke test.

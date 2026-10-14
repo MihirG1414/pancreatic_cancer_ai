@@ -101,6 +101,7 @@ def test_report_cli_creates_local_html_and_native_views(tmp_path, monkeypatch):
     assert "[3, 4, 4]" in html
     assert "[7, 8, 4]" in html
     assert "not a model prediction" in html
+    assert "Predictions unavailable" in html
     assert all((output / f"axis-{axis}.png").is_file() for axis in range(3))
     assert main() == 1  # existing directory must not be overwritten
 

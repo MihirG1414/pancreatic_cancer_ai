@@ -2,6 +2,11 @@
 
 Reviewed 2026-09-30 against official baseline commit `d08f2356fa70d9460881fec0aedba4ebd1566c7e` and the linked weight record. This is an integration plan, not an inference result.
 
+2026-10-14 continuation: input export, a pinned Docker-free Colab runner/notebook,
+output import and reporting are now implemented. See [Milestone 3 demo](milestone-3-demo.md)
+for executable commands and documented dependency/runtime adaptations.
+No GPU model run has completed; this earlier requirements review remains useful.
+
 ## Baseline contract and preprocessing
 
 - The [container entry point](https://github.com/DIAGNijmegen/PANORAMA_baseline/blob/main/src/process.py) reads one contrast-enhanced venous CT from `/input/images/venous-ct/*.mha` and `/input/clinical-information-pancreatic-ct.json` with `age`, `sex`, `study_date`, and `scanner`. It currently prints those fields. For any company or clinical case, confirm permission and prevent identifiable metadata entering logs. The current local MSD sample is NIfTI; a **derived** MHA would need an independently checked NIfTI-to-SimpleITK conversion preserving physical geometry. Keep the source untouched. CT phase and intensity calibration cannot be inferred from `.nii.gz` alone.

@@ -56,3 +56,22 @@ def test_noninteger_annotation_rejected(tmp_path):
     mask.header.set_xyzt_units("mm")
     with pytest.raises(ValueError, match="integer"):
         plot_slice(scan, axis=2, index=4, mask=mask)
+
+
+def test_prediction_has_separate_panel_fixed_scale_and_correct_voxels(tmp_path):
+    scan, mask = images(tmp_path)
+    values = np.zeros(scan.shape, dtype=np.float32)
+    values[8:10, 6:11, 4] = 0.6
+    prediction = nib.Nifti1Image(values, scan.affine)
+    prediction.header.set_xyzt_units("mm")
+    fig = plot_slice(scan, axis=2, index=4, mask=mask, prediction=prediction)
+    assert len(fig.axes) == 4  # three separate panels plus detection colorbar
+    assert "annotation" in fig.axes[1].get_title()
+    assert "candidate detection" in fig.axes[2].get_title()
+    overlay = fig.axes[2].images[1]
+    assert overlay.get_clim() == (0, 1)
+    np.testing.assert_array_equal(overlay.get_array().mask, values[:, :, 4].T == 0)
+    plt.close(fig)
+    prediction.affine[0, 3] += 5
+    with pytest.raises(ValueError, match="geometry"):
+        plot_slice(scan, prediction=prediction)

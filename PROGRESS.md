@@ -2,7 +2,17 @@
 
 Updated: 2026-10-14 (Asia/Calcutta). This is the authoritative current handoff.
 
-## Milestone 3 in progress (2026-10-14)
+## Milestone 3 local integration verified; GPU pilot pending (2026-10-14)
+
+Current delivery state: verified CT-only MHA export, Docker-free five-fold GPU
+runner, cleared Colab notebook, prediction import and separate report panels
+are implemented. **No real pretrained inference has run and no genuine model
+outputs exist locally.** The notebook's GPU cells remain unexecuted. The current
+sample's phase/HU/clinical metadata and training overlap are unresolved.
+Exact next technical action: connect a free Colab NVIDIA runtime and execute
+the nine code cells in `notebooks/02_panorama_inference_colab.ipynb` with the
+three existing files in ignored `outputs/milestone-3-input`, then download and
+validate/import the genuine output bundle using `docs/milestone-3-demo.md`.
 
 Actual resume review: local HEAD `a072ba0`, branch
 `milestone-1-ct-inspection`; only pre-existing inspection notebook outputs are
@@ -71,6 +81,29 @@ Notebook runner pin must be advanced to the reviewed correction commit before
 delivery. Exact next action: finish real unavailable-prediction report/manual
 synthetic view checks, demo guide, final commits and push; GPU pilot still pending.
 
+2026-10-14 local delivery check: notebook runner pin now points to reviewed
+`1157be07c6954d1ec08f95a2b3bbf6d898f6b44d`. Independent code review findings
+were addressed with regressions. Real report generated at ignored
+`outputs/milestone-3-report-no-inference/index.html`; checked HTML text,
+all three real annotation views and all three explicitly synthetic display
+fixtures. Report says **Predictions unavailable**; annotation volumes/bounds
+match milestone 2. CT and mask hashes still match acquisition provenance.
+Real derived MHA is 101,712,190 bytes; no source scan/mask was changed.
+Base environment still has no torch, nnU-Net or SimpleITK; optional SimpleITK
+is isolated in ignored `outputs/panorama-io`. Existing three Python processes
+and pre-existing inspection-notebook changes are preserved.
+
+GPU access attempt: browser inventory had no enabled surfaces; creating a Colab
+tab returned `Browser is not available: iab`. Laptop preflight found no
+nvidia-smi. No suitable controllable GPU runtime was available, so a model run
+could not be attempted. The demo guide lists exact Colab cells/user actions and
+Windows import/report commands. GPU compatibility (including the documented
+scikit-image wheel adaptation), actual runtime/peaks, real prediction alignment,
+input suitability, license permission for commercial company use and dataset
+independence remain unverified. No disease accuracy or clinical risk is claimed.
+Remaining session delivery action: commit the verified importer/notebook/demo,
+push the existing branch and compare the actual remote head.
+
 ## Milestone 2 completed (2026-09-30)
 
 The user authorized a second milestone: verify official PANORAMA inference requirements,
@@ -126,6 +159,10 @@ Earlier detailed evidence is preserved in [the milestone 1 history](docs/progres
 - **Exact next technical action after delivery:** obtain permitted pretrained
   weights and suitable Colab/company NVIDIA GPU access for one-case pilot,
   confirm source overlap and preserve geometry in input conversion.
+- **Milestone 3 local integration verified:** CT-only export tested on the real
+  public case; cleared source-pinned GPU notebook; validated prediction importer
+  and separate report panels; 119 software tests passed. Real GPU pilot pending;
+  execute the nine Colab cells and import outputs using `docs/milestone-3-demo.md`.
 
 ## Completed work and evidence
 
@@ -149,7 +186,8 @@ milestone 1; the real scan and notebook were not rerun merely to update document
 - Public sample directory: `D:/MiraiData/MSD_Task07`, outside Git. Acquisition
   details and hashes are in its `sample_provenance.json`.
 - Ignored outputs: executed notebooks with and without mask, plus rendered PNGs
-  under `outputs/`. The tracked notebook has no saved output.
+  under `outputs/`. The inspection notebook has pre-existing local saved outputs
+  and remains unstaged; the new tracked Colab notebook has cleared outputs.
 - Observed real CT: 512 x 512 x 97, approximately 0.916 x 0.916 x 2.5 mm, RAS.
   Supplied mask geometry matches. Notebook RSS snapshots were about 92-113 MiB,
   not peak-memory guarantees. No full-volume array was cached.
