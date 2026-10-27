@@ -70,6 +70,13 @@ For this documentation commit, reuse the author's name/email from that verified
 existing user commit with command-local Git options (no global identity change).
 This resolves the earlier missing-identity/remote-ahead checkpoint below.
 
+Delivery verification: documentation commit `d9a35a1` was pushed to
+`origin/milestone-1-ct-inspection`; local and actual remote head both matched
+`d9a35a1de8b497a43abaa4acb45f027702bc0e27`. Working tree was clean and source
+CT hash still matched after report generation. This closure checkpoint records
+that verification; push and verify its own commit at session end. Next action
+remains user review of `outputs/panorama-report-20261028/index.html`.
+
 ## Colab output received; local report validation pending (2026-10-28)
 
 The user executed the Colab pilot and downloaded/extracted its output. Reviewed
