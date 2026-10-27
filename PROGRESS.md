@@ -1,6 +1,109 @@
 # Mirai / Rises.io - resume record
 
-Updated: 2026-10-14 (Asia/Calcutta). This is the authoritative current handoff.
+Updated: 2026-10-28 (Asia/Calcutta). This is the authoritative current handoff.
+
+## Complete: restored CT and first prediction report (2026-10-28)
+
+User confirms this is a new PC with only the cloned repository and authorizes
+redownloading the single public `pancreas_290` sample. Exact original input export
+is available in `C:/Users/Mihir1/Downloads/Telegram Desktop` (CT plus two JSONs).
+The Colab output bundle is in `C:/Users/Mihir1/Downloads/panorama-output`.
+Plan: restore a lightweight local environment; use the existing bounded downloader
+for only the sample CT/annotation and dataset metadata; match source/export hashes;
+create an ignored manifest; validate/import the bundle; generate and inspect the
+report. No GPU installation or repeated inference is needed. Free RAM before
+setup is about 2.09 GiB on this new PC (15.19 GiB visible); monitor before IO.
+Fetched remote `e935167` (user's saved Colab notebook); preserve its existing
+outputs and source changes. Exact next action: download the sample and set up
+the absent local environment, then compare original CT SHA256 with run provenance.
+
+Acquisition check: bounded downloader completed for dataset metadata, the
+28,093,127-byte CT and 28,963-byte existing annotation in ignored
+`data/MSD_Task07`. Tar headers, fixed archive ETag, exact HTTP ranges and gzip CRC
+passed. Downloaded CT SHA256 equals both input/run provenance
+`4b5cb353850c0a68c5b1824519777ef2a736cb171bcbad277c55cfd8c4abaaf8`;
+Telegram export SHA256 equals both recorded MHA hashes
+`2511980c4a9689647cb808ebcf6bbace82109332147a25b8a2af47242e6fe08c`.
+Created ignored `cases.local.csv`; no source scan/export changed. New `.venv`
+uses available bundled Python 3.12.14 (the old PC's Python 3.11 is absent),
+with lightweight requirements and optional SimpleITK 2.4.0; installing tools
+for local verification. This local reporting environment differs from Colab's
+recorded inference environment. Next: execute importer and report, then review.
+
+Completed local validation: `mirai_ct.panorama` imported the genuine bundle to
+ignored `outputs/panorama-import-20261028`. Source/export/bundle hashes,
+baseline/nnU-Net pins, five folds, successful run declaration, original physical
+grid, finite map range, score/map-maximum equality and restored NIfTI sample
+planes passed. No resampling was performed. `mirai_ct.report` generated
+`outputs/panorama-report-20261028/index.html` plus six PNGs. Visually inspected
+all six images; checked HTML links, separate annotations/model panels, score,
+provenance and limitations. Original annotation counts remain 29,162 (label 1)
+and 3,521 (label 2). Candidate display focus is native [251, 290, 35]; this is a
+display selection, not a validated lesion location or accuracy result.
+
+Verification on Python 3.12.14: **118 tests passed** (8 SimpleITK/NumPy 2.5
+deprecation warnings). Excluded only `tests/test_panorama_notebook.py`, whose
+cleared-output contract is incompatible with the user's already committed
+executed Colab notebook (nine code cells have outputs). Preserved that notebook;
+did not report its cleanliness test as passed. Ruff lint and format for
+`src tests scripts`, pip check and Git whitespace checks passed. Local resolved
+environment recorded in ignored `outputs/report-environment-20261028.txt`;
+SimpleITK 2.4.0 is installed in this new `.venv`, not the historical optional
+target folder. Torch remains absent locally. Available RAM after checks about
+1513.7 MiB (snapshot, not a peak measurement). Browser/file opening was queued
+through Codex; visual review here used the actual generated PNGs and HTML checks.
+
+Updated README/demo guide to distinguish this successful pilot from the prior
+unexecuted handoff. Generated outputs, data, manifest and environment remain
+ignored. No input/weight downloads beyond this one sample and no repeated GPU
+run. Runtime workarounds still need permanent source fixes; input phase/HU,
+clinical metadata, training overlap and independent performance remain unknown.
+Exact next action: open the generated HTML report and review the demo with the
+user; before another Colab pilot, fix/test notebook environment/cache/download
+handling and clear tracked notebook outputs in a separately scoped change.
+For evaluation, first obtain suitable independently held-out permitted cases.
+
+Delivery preparation: created ignored `outputs/panorama-report-20261028.zip`
+containing the HTML and six images for sharing. Reconciled the new remote by
+fast-forwarding to the user's `e935167`; no notebook changes made locally.
+For this documentation commit, reuse the author's name/email from that verified
+existing user commit with command-local Git options (no global identity change).
+This resolves the earlier missing-identity/remote-ahead checkpoint below.
+
+## Colab output received; local report validation pending (2026-10-28)
+
+The user executed the Colab pilot and downloaded/extracted its output. Reviewed
+the bundle at local ignored/untracked-outside-repository path
+`C:/Users/Mihir1/Downloads/panorama-output`. Its `run.json` reports successful
+pretrained inference with baseline `d08f235`, folds 0-4, Tesla T4 and runtime
+167.6979 seconds. Both stage logs end with `done with scan`. All four recorded
+output SHA256 checks match the extracted files. The scalar JSON is
+0.999536395072937: an uncalibrated model score, not a clinical probability.
+These are bundle/provenance checks; local map geometry, voxels and final report
+have not yet been independently validated. Historical statements below that no
+GPU run exists describe the earlier handoff and are superseded by this receipt.
+
+Colab troubleshooting in this conversation: the source cleanliness guard rejected
+an untracked `src/__pycache__/data_utils.cpython-311.pyc`; the user removed that
+specific cache and set `PYTHONDONTWRITEBYTECODE=1` in subprocess ENV. Stage 1 then
+failed because it inherited Colab's inline Matplotlib backend; setting
+`ENV["MPLBACKEND"] = "Agg"` allowed the user to continue. Cell 9 needed to reload
+`bundle/run.json` because notebook variable `run` was undefined. These were
+runtime workarounds; repository runner/notebook fixes remain pending.
+
+Current checkout is clean before this checkpoint update, HEAD `cb532aa`. Unlike
+the historical laptop state, this checkout has no `.venv`, `outputs/` or local
+case manifest; the recorded `D:/MiraiData/MSD_Task07` path is absent. Existing
+Python processes were inspected and left untouched. No environment was installed
+and no input was redownloaded. Asked user for original CT and input-export paths.
+Input suitability and training overlap remain unresolved; this is a software
+smoke test, not independent disease-performance validation.
+
+Exact next action: locate/recover the original `pancreas_290.nii.gz` and exact
+CT-only input export (from the user or still-connected Colab), restore/reuse the
+lightweight local environment and manifest as needed, validate/import this bundle
+with `mirai_ct.panorama`, then generate and visually inspect `mirai_ct.report`.
+Do not rerun successful inference or download weights again for reporting.
 
 ## Milestone 3 local integration verified; GPU pilot pending (2026-10-14)
 
@@ -261,3 +364,5 @@ completion record **completed work, checks and results, unresolved issues, and
 the exact next step**. Commit only verified related changes with this record.
 Push at session end; verify the remote result. If interrupted before committing
 or pushing, leave an honest pending checkpoint for the next session.
+
+2026-10-28 checkpoint delivery: Git whitespace check passed. Commit attempt was blocked by missing local Git author identity; checkpoint remains staged/uncommitted. Remote inspection reports head e935167913491b448873506f71c859da3249cdec while local HEAD is cb532aa; do not assume this checkout includes newer remote changes. Inspect/fetch and reconcile before any subsequent commit/push. No force-push or history rewrite was attempted.

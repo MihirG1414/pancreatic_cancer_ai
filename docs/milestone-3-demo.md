@@ -1,5 +1,23 @@
 # Milestone 3 — PANORAMA integration and GPU pilot handoff
 
+2026-10-28 continuation: the user completed both pretrained stages in Colab on
+a Tesla T4. The received bundle records 167.6979 seconds and an uncalibrated
+score of 0.999536395072937. On the new PC, the single public CT/annotation was
+recovered with the bounded downloader; the CT and original MHA hashes match
+the inference provenance. Local import and report generation passed. Open
+`outputs/panorama-report-20261028/index.html` in this checkout; keep its six PNGs
+beside it when sharing the report folder. See the current `PROGRESS.md` for
+verification results and remaining limitations. The original handoff below is
+historical; no second GPU run is needed for the existing report.
+
+Runtime workarounds used in this pilot: remove only the identified untracked
+baseline Python cache, set subprocess `ENV["PYTHONDONTWRITEBYTECODE"] = "1"`
+and `ENV["MPLBACKEND"] = "Agg"`, and reload `RUN_DIR / "bundle/run.json"`
+before checking download status if notebook variable `run` is undefined.
+Permanent runner/notebook fixes remain separate follow-up work. The user's
+saved Colab notebook already on the remote has executed outputs; it was
+preserved during this reporting milestone, not cleared or recommitted.
+
 Prepared/checked 2026-10-14 on the original Windows laptop. The executable local
 integration and GPU notebook are implemented. **No real PANORAMA inference has
 run in this session.** Free Colab requires the user to connect a runtime and run

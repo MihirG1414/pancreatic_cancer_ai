@@ -7,10 +7,13 @@ records completed work, checks, unresolved issues and the exact next step.
 Milestone 1 provides CPU CT inspection; Milestone 2 adds annotation reports and a
 [source-checked PANORAMA plan](docs/panorama-inference-plan.md). Milestone 3 adds
 verified CT-only MHA export, a source-pinned Colab GPU notebook, output import
-and separate prediction reporting. **No real model inference has run yet.**
+and separate prediction reporting. **The first real Colab inference bundle was
+imported and its report verified on 2026-10-28.** This public sample is a software
+smoke test with unresolved training overlap and input suitability, not an
+independent clinical evaluation. See `PROGRESS.md` for current results and paths.
 The [Milestone 3 demo guide](docs/milestone-3-demo.md) gives Windows commands,
-the nine Colab cells and import steps. Next: connect a permitted free Colab GPU,
-run the five-fold pretrained baseline once, and record actual outputs/resources.
+the nine Colab cells and import steps. The completed pilot does not need to be
+rerun to view its report.
 
 The implementation follows the supplied problem statement and the
 [milestone specification](docs/superpowers/specs/2026-09-22-ct-inspection-design.md).
@@ -184,7 +187,8 @@ Never force-push, commit patient material or manufacture activity.
 - `docs/`: design, plan, data-access instructions and progress evidence.
 - `.venv/`, `outputs/`, `cases.local.csv`: local, ignored.
 
-The pretrained five-fold integration is prepared for a permitted Colab/company
-NVIDIA GPU pilot. No GPU run, disease metric or clinical claim is established by
-local software tests. Verify phase/HU suitability and independent data overlap
-before any evaluation; the public MSD training sample is only a software smoke test.
+The pretrained five-fold integration has completed one Colab pilot and local
+report import. No disease metric or clinical claim is established by
+local software tests or this single case. Verify phase/HU suitability and
+independent data overlap before any evaluation; the public MSD training sample
+is only a software smoke test.
