@@ -2,6 +2,18 @@
 
 Updated: 2026-10-28 (Asia/Calcutta). This is the authoritative current handoff.
 
+## Portable chat-memory file (2026-10-28)
+
+Created `docs/project-memory-2026-10-28.md` at the user's request. It consolidates
+completed milestones, genuine inference/run measurements, validation evidence,
+separate local/GPU stacks, artifact locations, runtime workarounds, candidate-map
+display findings and remaining work for transfer to an older project chat.
+Checks passed: UTF-8 reading, balanced fenced blocks, relative reference links,
+key handoff facts and Git whitespace. The file contains approximately 2,291 words.
+This is a dated snapshot; this root checkpoint remains authoritative. No code,
+model output or notebook changed. Next: user can attach/copy the memory file;
+project next steps remain the viewer/runtime/evaluation work recorded below.
+
 ## Complete: restored CT and first prediction report (2026-10-28)
 
 User confirms this is a new PC with only the cloned repository and authorizes
