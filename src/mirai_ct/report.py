@@ -74,6 +74,7 @@ def _report_html(
     indices: list[int],
     prediction_info: dict | None = None,
     prediction_indices: list[int] | None = None,
+    interactive_section: str = "",
 ) -> str:
     info = metadata(scan)
     source = html.escape(case.dataset_source)
@@ -132,11 +133,11 @@ def _report_html(
         prediction_section = f"""<h2>Imported PANORAMA inference</h2>
 <p><strong>PANORAMA candidate detection map</strong>; patient-level <strong>uncalibrated model score</strong>: {prediction_info["score"]:.6g}.</p>
 <p>The map contains extracted candidate values from the baseline postprocessing. It is not Grad-CAM, a validated tumor segmentation, or a calibrated clinical risk probability. Zero values indicate no retained candidate value; they do not establish absence of disease. The score equals the map maximum. Output hashes and the native physical grid were checked during import; no resampling was used. Provenance is supplied by the run and is not cryptographic proof of execution.</p>
-<p>Existing dataset annotations and model values appear in separate panels and legends. The source annotation never guided model preprocessing, segmentation, crop or detection. Below, three additional views focus on a map maximum (first maximum in native k/i/j order); an all-zero map uses middle slices. This selection is for display only.</p>
+<p>Existing dataset annotations and model values appear in separate panels and legends. The source annotation never guided model preprocessing, segmentation, crop or detection. The static candidate views use the native k slice with the largest positive candidate cross-section (earliest tie), with i/j centered on that slice's candidate bounds; an all-zero map uses middle slices. This selection is for display only, not a tumor-boundary measurement.</p>
 <details><summary>Run provenance and unresolved input suitability</summary><pre>{provenance}</pre></details>{prediction_views}"""
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>Case report: {title}</title>
-<style>body{{font:16px/1.5 system-ui,sans-serif;max-width:1000px;margin:2rem auto;padding:0 1rem;color:#18252b}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #aaa;padding:.4rem;text-align:left}}img{{max-width:100%;height:auto}}figure{{margin:2rem 0}}.notice{{background:#eef5f8;padding:1rem}}</style></head>
+<style>body{{font:16px/1.5 system-ui,sans-serif;max-width:1200px;margin:2rem auto;padding:0 1rem;color:#18252b}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #aaa;padding:.4rem;text-align:left}}img{{max-width:100%;height:auto}}figure{{margin:2rem 0}}.notice{{background:#eef5f8;padding:1rem}}.viewer-controls{{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;padding:1rem;background:#eef5f8}}.viewer-panels{{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}}.viewer-panels figure{{margin:0;min-width:0}}.viewer-panels canvas{{width:100%;height:auto;image-rendering:pixelated;background:#000}}button,select{{font:inherit;padding:.3rem}}@media(max-width:700px){{.viewer-panels{{grid-template-columns:1fr}}}}pre{{white-space:pre-wrap;overflow-wrap:anywhere}}</style></head>
 <body><h1>CPU case report: {title}</h1>
 <p class="notice"><strong>Dataset annotation measurements are not a model prediction, clinical diagnosis, or performance result.</strong> Original CT and annotation files were read without modification. Model outputs, when imported, are labeled separately.</p>
 <p>Dataset source: {source}</p>
@@ -152,15 +153,20 @@ qform code: {info["qform_code"]}; sform code: {info["sform_code"]}; obliquity: {
 <p>Label meanings follow the MSD Task07 dataset.json only when the manifest names that dataset. Unknown IDs are not interpreted. Voxels are counted in native geometry. Volume uses the absolute affine determinant and documented spatial units; 1 mL = 1,000 mm³. Background is included in counts but has no region box.</p>
 <p>Bounding boxes use original NIfTI voxel indices (i, j, k), zero-based with both minimum and maximum <strong>inclusive</strong>. They enclose all voxels of each label, including disconnected regions. They are axis-aligned in voxel space; direction letters above indicate increasing indices. These are not head/body/tail assignments.</p>
 <table><thead><tr><th>Label ID</th><th>Meaning</th><th>Voxel count</th><th>Bounding box, inclusive</th><th>Physical volume</th></tr></thead><tbody>{"".join(table_rows) if rows else '<tr><td colspan="5">No annotation supplied</td></tr>'}</tbody></table>
+{interactive_section}
 <h2>Native CT views</h2><p>Each image shows CT and, when supplied, an existing annotation overlay. Planes are original voxel axes, not standardized radiological views. Display level 50/window 400 affects appearance only.</p>{views}
 {prediction_section}
 </body></html>"""
 
 
-def generate_report(case: Case, output: Path, predictions: Path | None = None) -> Path:
+def generate_report(
+    case: Case, output: Path, predictions: Path | None = None, *, interactive: bool = False
+) -> Path:
     """Write HTML/native views, plus separate imported-prediction views if supplied."""
     if output.exists():
         raise ValueError("Output directory already exists; choose a new name to preserve it.")
+    if interactive and predictions is None:
+        raise ValueError("Interactive viewer requires a validated --predictions import.")
     scan = load_volume(case.scan_path)
     mask = load_volume(case.label_path) if case.label_path is not None else None
     prediction, prediction_info, prediction_indices = None, None, None
@@ -189,6 +195,12 @@ def generate_report(case: Case, output: Path, predictions: Path | None = None) -
     from mirai_ct.visualization import plot_slice
 
     output.mkdir(parents=True)
+    interactive_section = ""
+    if interactive:
+        from mirai_ct.viewer import export_viewer, viewer_html
+
+        display_info = export_viewer(scan, prediction, mask, output / "viewer")
+        interactive_section = viewer_html(display_info, case.case_id)
     for axis in range(3):
         figure = plot_slice(scan, axis=axis, index=indices[axis], mask=mask)
         try:
@@ -207,7 +219,14 @@ def generate_report(case: Case, output: Path, predictions: Path | None = None) -
     report = output / "index.html"
     report.write_text(
         _report_html(
-            case, scan, rows, mask is not None, indices, prediction_info, prediction_indices
+            case,
+            scan,
+            rows,
+            mask is not None,
+            indices,
+            prediction_info,
+            prediction_indices,
+            interactive_section,
         ),
         encoding="utf-8",
     )
@@ -224,12 +243,17 @@ def main() -> int:
     parser.add_argument(
         "--predictions", type=Path, help="Validated local PANORAMA import directory"
     )
+    parser.add_argument(
+        "--interactive", action="store_true", help="Add offline native-k slice navigation"
+    )
     args = parser.parse_args()
     try:
         matches = [case for case in read_cases(args.manifest) if case.case_id == args.case_id]
         if not matches:
             raise ValueError(f"Case ID not found in manifest: {args.case_id}")
-        report = generate_report(matches[0], args.output, args.predictions)
+        report = generate_report(
+            matches[0], args.output, args.predictions, interactive=args.interactive
+        )
         print(
             json.dumps(
                 {"report": str(report), "kind": "local annotation/imported prediction report"}

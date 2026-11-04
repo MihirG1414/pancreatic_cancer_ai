@@ -1,5 +1,10 @@
 # PANORAMA inference plan — milestone 2 source review
 
+Current status (2026-11-04): the genuine Colab pilot and local prediction import
+were completed on 2026-10-28. Usability/reliability improvements are implemented;
+see [completion review](completion-review-2026-11-04.md). Statements below about
+unexecuted inference and unavailable measurements describe the earlier review.
+
 Reviewed 2026-09-30 against official baseline commit `d08f2356fa70d9460881fec0aedba4ebd1566c7e` and the linked weight record. This is an integration plan, not an inference result.
 
 2026-10-14 continuation: input export, a pinned Docker-free Colab runner/notebook,

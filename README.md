@@ -15,6 +15,23 @@ The [Milestone 3 demo guide](docs/milestone-3-demo.md) gives Windows commands,
 the nine Colab cells and import steps. The completed pilot does not need to be
 rerun to view its report.
 
+2026-11-04: corrected the Colab backend/cache/download handling and added an
+optional offline slice viewer with candidate zoom, outlines and opacity.
+See the [completion review](docs/completion-review-2026-11-04.md) for remaining
+requirements and pending manual browser/GPU checks.
+
+Generate a fresh interactive report from the existing validated import:
+
+```powershell
+.\.venv\Scripts\python.exe -m mirai_ct.report --manifest .\cases.local.csv --case-id pancreas_290 --predictions .\outputs\panorama-import-20261028 --interactive --output .\outputs\panorama-report-new
+```
+
+Open the resulting `index.html` and keep its `viewer/` folder beside it. The
+native-k slider covers every slice; the default selects the largest retained
+candidate cross-section. Fill, outline, opacity and zoom alter display only.
+The new-PC `.venv` uses Python 3.12.14 and has SimpleITK installed directly;
+the original laptop setup below is historical. Use the existing environment.
+
 The implementation follows the supplied problem statement and the
 [milestone specification](docs/superpowers/specs/2026-09-22-ct-inspection-design.md).
 Original scans are never resampled, cropped, reoriented or overwritten. GPU
@@ -165,6 +182,15 @@ separate panels and an uncalibrated score.
 .\.venv\Scripts\python.exe -m pip check
 git status --short
 ```
+
+The dependency-free JavaScript control tests use Node's built-in test runner:
+
+```powershell
+node --test tests/viewer-controls.test.cjs
+```
+
+These simulated-DOM checks supplement actual browser inspection; they do not
+verify browser rendering.
 
 Tests generate tiny **synthetic arrays in temporary directories** solely to
 check software. Real scan inspection is recorded separately in the

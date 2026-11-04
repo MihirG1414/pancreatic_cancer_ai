@@ -188,17 +188,10 @@ def load_predictions(case: Case, directory: Path) -> tuple[Volume, dict]:
 
 
 def prediction_focus(prediction: Volume) -> list[int]:
-    """Find a displayed peak in bounded native planes; no annotation dependence."""
-    peak, location = 0.0, [size // 2 for size in prediction.shape]
-    for k in range(prediction.shape[2]):
-        plane = read_slice(prediction, 2, k)
-        if plane.min() < 0 or plane.max() > 1:
-            raise ValueError("Candidate detection values outside [0,1].")
-        if float(plane.max()) > peak:
-            peak = float(plane.max())
-            i, j = np.unravel_index(plane.argmax(), plane.shape)
-            location = [int(i), int(j), k]
-    return location
+    """Choose a visible candidate cross-section, without consulting annotations."""
+    from mirai_ct.viewer import candidate_summary
+
+    return candidate_summary(prediction)["focus_ijk"]
 
 
 def main() -> int:

@@ -34,6 +34,55 @@ can pin it, then preserve executed evidence and fix the nine notebook cells.
 User will upload original requirements; independent labeled test-case availability
 is still being clarified (explained training/development overlap in chat).
 
+2026-11-04 implementation checkpoint: runtime fix committed as
+`c9363a9c378e7c539e60a83b802e102cb6ff88e9`; nine-cell notebook now pins that
+immutable source, sets headless/no-bytecode ENV before model imports, resets
+permission to False, explicitly reports reused inputs, captures top-level logs,
+selects the largest candidate preview slice and reloads saved status for download.
+Original executed notebook preserved byte-for-byte at ignored
+`outputs/colab-evidence-20261104.executed.ipynb` (SHA256
+`02219b5554f0910ce4f3bbdd2197f941fd828564c6b72702fcc2daed153f80e8`).
+Tracked notebook is cleared; all prior troubleshooting cells removed from it.
+
+Implemented `viewer.py` plus packaged vanilla-JS controls and optional report
+`--interactive`. Exports native axis-2 PNGs one plane at a time with original
+physical aspect, separate CT/annotation/candidate panels, synchronized slice
+navigation, 15-mm padded candidate zoom, fill/outline/off and opacity. No CDN,
+server, new runtime dependency, original-grid edit or fabricated probability map.
+Static candidate focus now uses largest positive cross-section; real case focus
+is [259, 290, 42] (640 positive voxels on k=42), replacing the thin k=35 edge.
+
+Generated `outputs/panorama-report-20261104/index.html`, 388 viewer PNGs covering
+all 97 native k planes, six static views and a shareable report ZIP (~9.4 MB).
+Asset/embedded-metadata checks passed; all original CT/imported-map hashes and
+score 0.999536395072937 unchanged. Visually inspected new static k=42 view.
+Verified built wheel contains viewer JavaScript. Report slice assets are about
+9.20 MiB. Available RAM afterward 1168.4 MiB (snapshot, not peak).
+
+Verification: **138 Python tests passed**, including the formerly excluded
+notebook test and regressions (9 existing SimpleITK/NumPy deprecation warnings).
+**7 Node simulated-DOM tests passed**, including navigation/zoom/opacity,
+late-image race protection and missing assets. Full Ruff lint/format, pip check
+and whitespace checks passed. Initial CLI subprocess test failures were caused
+by the new PC lacking an installed project/PYTHONPATH; installed this repository
+editable with --no-deps, then the full suite passed. No dependency/environment
+reinstallation, model download or GPU rerun.
+
+Actual browser verification is PENDING: native Edge UI automation stopped with
+"could not determine the current browser URL on Windows with enough confidence
+to enforce policy". Stopped UI interaction as required. Automated JS/state and
+PNG checks do not substitute for manual browser rendering verification. Corrected
+Colab GPU execution is also untested; previous pilot remains valid evidence.
+
+Added `docs/completion-review-2026-11-04.md` with provisional requirements audit,
+evaluation-data explanation, missing segmentation/localization/explanation/risk
+work and explicit acceptance gates. Original problem statement upload still
+pending; no independent cases confirmed. Updated README/demo/source-plan status.
+Exact next action: user opens the new report and checks controls; read the
+promised original .md when attached, map its complete requirements to this audit,
+then implement unblocked missing outputs and obtain independent test-case access.
+Do not mark the overall project or clinical validation complete.
+
 ## Portable chat-memory file (2026-10-28)
 
 Created `docs/project-memory-2026-10-28.md` at the user's request. It consolidates

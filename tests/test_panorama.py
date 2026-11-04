@@ -228,3 +228,22 @@ def test_import_cli_fails_clearly_on_missing_bundle(tmp_path, monkeypatch):
     )
     assert main() == 1
     assert not (tmp_path / "imported").exists()
+
+
+def test_interactive_report_uses_validated_prediction_assets(tmp_path):
+    from mirai_ct.panorama import import_predictions
+    from mirai_ct.report import generate_report
+
+    case, exported, bundle, _ = bundle_fixture(tmp_path)
+    imported = import_predictions(case, exported, bundle, tmp_path / "imported")
+    report = generate_report(case, tmp_path / "report", imported, interactive=True)
+    text = report.read_text(encoding="utf-8")
+    assert 'id="slice-index"' in text
+    assert 'src="viewer/viewer.js"' in text
+    assert 'id="viewer-data"' in text
+    assert "largest positive candidate cross-section" in text
+    assert (report.parent / "viewer/slices/0-ct.png").is_file()
+    assert (report.parent / "viewer/display.json").is_file()
+    with pytest.raises(ValueError, match="requires"):
+        generate_report(case, tmp_path / "no-prediction", interactive=True)
+    assert not (tmp_path / "no-prediction").exists()
