@@ -1,6 +1,38 @@
 # Mirai / Rises.io - resume record
 
-Updated: 2026-10-28 (Asia/Calcutta). This is the authoritative current handoff.
+Updated: 2026-11-04 (Asia/Calcutta). This is the authoritative current handoff.
+
+## In progress: milestone 4 usability and Colab reliability (2026-11-04)
+
+User authorized review of the repo/plan and continuation toward project completion.
+Resume review: clean branch at `6013ef9`, matching actual remote head; existing
+scan/import/report artifacts and `.venv` present; existing Python processes left
+untouched. Reviewed root checkpoint, milestone specifications/plans, source,
+tests and executed notebook. The broader private problem statement is absent
+from this clone; asked user for its path and independent evaluation-case access.
+No Superpowers skills are installed in the available local skills directory;
+follow the same specification/plan/test/implementation/review sequence directly.
+
+Next milestone: (1) permanently fix Colab backend/cache/download handling,
+preserve its executed evidence under ignored outputs and restore a cleared
+source-pinned notebook; (2) improve candidate focus and add an offline native
+slice viewer with synchronized CT/annotation/candidate panels, zoom, outlines
+and opacity; (3) audit remaining requirements and prepare evaluation gates.
+Reuse the successful model output. No new inference or data/model download.
+Exact next action: write milestone 4 design/tasks and failing regressions for
+runtime defects and candidate visibility, then implement in small verified commits.
+
+Runtime checkpoint: eight new regressions initially failed for missing helpers;
+implemented strict pinned-source validation that tolerates only untracked
+`__pycache__/*.pyc` while rejecting source edits and other untracked files, plus
+headless Matplotlib/no-bytecode subprocess configuration. Runtime contract and
+reliability tests: **23 passed**; targeted Ruff and whitespace checks passed.
+Installed only missing declared dev dependency nbformat into the existing venv
+for notebook checks. No GPU or model changes; this does not count as a fresh
+GPU verification. Exact next action: commit this runner so the cleaned notebook
+can pin it, then preserve executed evidence and fix the nine notebook cells.
+User will upload original requirements; independent labeled test-case availability
+is still being clarified (explained training/development overlap in chat).
 
 ## Portable chat-memory file (2026-10-28)
 
