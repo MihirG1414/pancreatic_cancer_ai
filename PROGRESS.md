@@ -75,6 +75,13 @@ Then verify actual model views and continue anatomical localization/attribution
 and independent evaluation. No actual independent labeled test cases confirmed.
 This is implementation progress toward phase one, not full project completion.
 
+Milestone 5 delivery verification: changes through `662e2b6` pushed; local and
+actual remote head matched `662e2b6f4966a62554c3188d0fd0928d95d62354`, with clean
+working tree. Public immutable runner and model-output helper at notebook pin
+`b4138f2` fetched and matched tested Git source byte-for-byte. This closure
+checkpoint records that verification; push/check its own commit at session end.
+Next user action remains the saved-Colab-intermediate existence check.
+
 ## In progress: milestone 4 usability and Colab reliability (2026-11-04)
 
 User authorized review of the repo/plan and continuation toward project completion.
