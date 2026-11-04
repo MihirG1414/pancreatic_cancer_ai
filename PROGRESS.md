@@ -2,6 +2,55 @@
 
 Updated: 2026-11-04 (Asia/Calcutta). This is the authoritative current handoff.
 
+## In progress: original requirements reconciled; model-output completeness (2026-11-04)
+
+Read the user's original problem statement from the supplied private `._` file
+outside this repository. It is plaintext Markdown; do not copy/commit it.
+It requires a working inference pipeline with risk score, region location/size,
+segmentation and heatmap, plus validation. The earlier provisional audit correctly
+identified missing segmentation/explanation/localization outputs; it must now
+be updated against the actual document. Its example of PANORAMA-to-MSD external
+testing is insufficient for this baseline because MSD overlap is unresolved.
+The user's earlier no-training/pretrained-PANORAMA constraint remains in force.
+
+New milestone plan: add explicitly labeled per-region candidate geometry from
+the existing validated map; prepare optional native-grid model segmentation/raw
+probability exports and validated import without pretending the old candidate
+map contains missing intermediates. A raw probability heatmap is model output,
+not Grad-CAM/attention attribution. Head/body/tail, calibrated decisions and
+independent validation still require additional evidence. User is unsure whether
+the old Colab runtime remains; do not rerun/download models locally. Next action:
+write design/tests for native output restoration and candidate measurements,
+then implement and test with synthetic fixtures; use the real map only for
+candidate-support measurements. Browser UI automation remains stopped.
+
+Model-output checkpoint: implemented optional `--include-model-outputs` in the
+GPU runner, preserving native-grid stage-2 class-1 binary segmentation and raw
+class-1 probability with explicit zero-outside-crop semantics. Original baseline
+inference/postprocessing remains in use. Complete-pair semantic/hash/grid/range
+checks and per-plane native import checks reject missing/tampered extras; old
+bundles remain supported. Report displays actual extras only when present and
+explicitly marks their absence in the old real bundle. Probability output is
+not labeled as attribution. This path is synthetic-tested, not GPU-executed.
+
+Added optional `--measure-candidates`: 26-connected retained support regions with
+inclusive native bounds, RAS/LPS centroid, native-axis extent and support volume.
+These are not validated tumor measurements and head/body/tail stays unassigned.
+Generated `outputs/panorama-report-20261104-reviewed/index.html` and `report.json`
+from the unchanged genuine import. Its one support region has 5,168 voxels,
+bounds [244,276,35]-[273,304,47], approximate extents [27.48,26.56,32.5] mm and
+support volume 10.8410 mL; do not confuse this with annotation cancer volume.
+Model segmentation, raw probability and attribution availability are false in
+this real report; calibrated screening decision/clinical validation remain absent.
+
+Checks: full **152 Python tests passed** before adding one CLI forwarding
+regression; targeted model-output tests then passed with that regression.
+Ruff lint/format, pip check and whitespace passed. Temporary low-memory warnings
+occurred during small synthetic tests; real report ran after RAM recovered to
+about 1.9 GiB available. No processes were stopped. Next: commit source to obtain
+an immutable notebook pin, enable optional output export in its nine cells,
+document old-runtime recovery check, then run final checks and push.
+
 ## In progress: milestone 4 usability and Colab reliability (2026-11-04)
 
 User authorized review of the repo/plan and continuation toward project completion.

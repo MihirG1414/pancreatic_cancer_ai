@@ -111,7 +111,8 @@ def import_predictions(case: Case, input_export: Path, bundle: Path, output: Pat
     parent = output.resolve().parent
     while not parent.exists():
         parent = parent.parent
-    if shutil.disk_usage(parent).free < math.prod(scan.shape) * 4 + 16 * 1024**2:
+    bytes_per_voxel = 12 if run.get("model_outputs") is not None else 4
+    if shutil.disk_usage(parent).free < math.prod(scan.shape) * bytes_per_voxel + 16 * 1024**2:
         raise ValueError("Insufficient disk space for imported detection map.")
     header = scan.header.copy()
     header.set_data_dtype(np.float32)
@@ -126,6 +127,9 @@ def import_predictions(case: Case, input_export: Path, bundle: Path, output: Pat
     for k in sorted({0, scan.shape[2] // 2, scan.shape[2] - 1}):
         if not np.array_equal(read_slice(restored, 2, k), values[k].T):
             raise ValueError("Imported detection voxels differ after NIfTI restoration.")
+    from mirai_ct.panorama_outputs import import_model_outputs
+
+    model_output_hashes = import_model_outputs(scan, grid, bundle, output, run)
     if sha256_file(case.scan_path) != source_hash:
         raise ValueError("Source CT changed during import.")
     shutil.copyfile(bundle / "run.json", output / "run.json")
@@ -144,6 +148,7 @@ def import_predictions(case: Case, input_export: Path, bundle: Path, output: Pat
             "imported_utc": datetime.now(UTC).isoformat(),
             "meaning": "PANORAMA candidate detection map; uncalibrated model score",
             "geometry_validation": "same native ijk grid; LPS-to-RAS checked; no resampling",
+            "model_output_sha256": model_output_hashes,
         },
     )
     return output
@@ -183,8 +188,13 @@ def load_predictions(case: Case, directory: Path) -> tuple[Volume, dict]:
     if score != parse_score(score_path):
         raise ValueError("Imported model score differs from baseline JSON.")
     prediction = load_volume(directory / "detection.nii.gz")
-    check_geometry(load_volume(case.scan_path), prediction)
-    return prediction, {**info, "run": run, "input": _json(directory / "input-provenance.json")}
+    scan = load_volume(case.scan_path)
+    check_geometry(scan, prediction)
+    result = {**info, "run": run, "input": _json(directory / "input-provenance.json")}
+    from mirai_ct.panorama_outputs import load_model_outputs
+
+    load_model_outputs(scan, directory, result)
+    return prediction, result
 
 
 def prediction_focus(prediction: Volume) -> list[int]:

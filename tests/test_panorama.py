@@ -247,3 +247,96 @@ def test_interactive_report_uses_validated_prediction_assets(tmp_path):
     with pytest.raises(ValueError, match="requires"):
         generate_report(case, tmp_path / "no-prediction", interactive=True)
     assert not (tmp_path / "no-prediction").exists()
+
+
+def extended_bundle(tmp_path):
+    from mirai_ct.panorama_io import write_json
+    from mirai_ct.panorama_outputs import MODEL_SEMANTICS, export_model_outputs
+
+    case, exported, bundle, scores = bundle_fixture(tmp_path)
+    reference = sitk.ReadImage(str(exported / "ct.mha"))
+    labels = sitk.GetImageFromArray((scores > 0).astype(np.uint8).transpose(2, 1, 0))
+    labels.CopyInformation(reference)
+    coords = dict(
+        zip(
+            ["x_start", "x_finish", "y_start", "y_finish", "z_start", "z_finish"],
+            [0, scores.shape[0], 0, scores.shape[1], 0, scores.shape[2]],
+            strict=True,
+        )
+    )
+    hashes = export_model_outputs(reference, coords, labels, scores.transpose(2, 1, 0), bundle)
+    run = json.loads((bundle / "run.json").read_text())
+    run["model_outputs"] = MODEL_SEMANTICS
+    run["output_sha256"].update(hashes)
+    write_json(bundle / "run.json", run)
+    return case, exported, bundle, scores
+
+
+def test_import_optional_model_products_and_reject_local_tamper(tmp_path):
+    from mirai_ct.panorama import import_predictions, load_predictions
+
+    case, exported, bundle, scores = extended_bundle(tmp_path)
+    output = import_predictions(case, exported, bundle, tmp_path / "imported")
+    _, info = load_predictions(case, output)
+    assert set(info["model_output_sha256"]) == {"segmentation.nii.gz", "probability.nii.gz"}
+    for k in range(scores.shape[2]):
+        np.testing.assert_array_equal(
+            read_slice(load_volume(output / "probability.nii.gz"), 2, k), scores[:, :, k]
+        )
+    with (output / "segmentation.nii.gz").open("ab") as stream:
+        stream.write(b"tamper")
+    with pytest.raises(ValueError, match="checksum"):
+        load_predictions(case, output)
+
+
+@pytest.mark.parametrize("failure", ["missing", "tamper", "semantics"])
+def test_optional_output_pair_and_provenance_fail_closed(tmp_path, failure):
+    from mirai_ct.panorama import import_predictions
+    from mirai_ct.panorama_io import write_json
+    from mirai_ct.panorama_outputs import MODEL_FILES
+
+    case, exported, bundle, _ = extended_bundle(tmp_path)
+    if failure == "missing":
+        (bundle / MODEL_FILES["segmentation"]).unlink()
+    elif failure == "tamper":
+        with (bundle / MODEL_FILES["probability"]).open("ab") as stream:
+            stream.write(b"tamper")
+    else:
+        run = json.loads((bundle / "run.json").read_text())
+        del run["model_outputs"]
+        write_json(bundle / "run.json", run)
+    with pytest.raises((ValueError, OSError)):
+        import_predictions(case, exported, bundle, tmp_path / "imported")
+    assert not (tmp_path / "imported/import.json").exists()
+
+
+def test_extended_report_separates_model_products_and_candidate_measurements(tmp_path):
+    from mirai_ct.panorama import import_predictions
+    from mirai_ct.report import generate_report
+
+    case, exported, bundle, _ = extended_bundle(tmp_path)
+    imported = import_predictions(case, exported, bundle, tmp_path / "imported")
+    report = generate_report(case, tmp_path / "report", imported, measure_candidates=True)
+    text = report.read_text(encoding="utf-8")
+    info = json.loads((report.parent / "report.json").read_text())
+    assert info["model_segmentation_available"] is True
+    assert info["raw_probability_available"] is True
+    assert info["attribution_available"] is False
+    assert len(info["candidate_regions"]) == 1
+    assert "not validated tumor volume" in text
+    assert "not Grad-CAM" in text
+    assert all((report.parent / f"model-axis-{axis}.png").is_file() for axis in range(3))
+
+
+def test_old_bundle_report_does_not_invent_missing_outputs(tmp_path):
+    from mirai_ct.panorama import import_predictions
+    from mirai_ct.report import generate_report
+
+    case, exported, bundle, _ = bundle_fixture(tmp_path)
+    imported = import_predictions(case, exported, bundle, tmp_path / "imported")
+    report = generate_report(case, tmp_path / "report", imported)
+    info = json.loads((report.parent / "report.json").read_text())
+    assert info["model_segmentation_available"] is False
+    assert info["raw_probability_available"] is False
+    assert info["candidate_regions"] is None
+    assert "Unavailable in this imported bundle" in report.read_text(encoding="utf-8")

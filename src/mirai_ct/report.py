@@ -75,6 +75,8 @@ def _report_html(
     prediction_info: dict | None = None,
     prediction_indices: list[int] | None = None,
     interactive_section: str = "",
+    regions: list[dict] | None = None,
+    has_model_outputs: bool = False,
 ) -> str:
     info = metadata(scan)
     source = html.escape(case.dataset_source)
@@ -107,6 +109,28 @@ def _report_html(
         for axis in range(3)
     )
     prediction_section = "<h2>Model inference</h2><p><strong>Predictions unavailable.</strong> No imported PANORAMA run was supplied to this report.</p>"
+    region_section = ""
+    if regions is not None:
+        region_rows = "".join(
+            f"<tr><td>{r['region_id']}</td><td>{r['bounds_ijk_inclusive']}</td>"
+            f"<td>{[round(x, 2) for x in r['centroid_ras_mm']]}</td>"
+            f"<td>{[round(x, 2) for x in r['extent_mm_native_axes']]}</td>"
+            f"<td>{r['support_volume_ml']:.4f}</td><td>{r['score_max']:.6g}</td></tr>"
+            for r in regions
+        )
+        region_section = f"""<h2>Retained candidate support regions</h2>
+<p>Candidate support present: <strong>{"yes" if regions else "no"}</strong>. This is not a disease yes/no decision; no validated screening cutoff is established.</p>
+<p>Regions are 26-connected positive map voxels. Bounds use inclusive native ijk indices; centroids use RAS millimetres. Extents include voxel widths along native axes. Support volume and box extents are not validated tumor volume or diameter. Head/body/tail is unassigned. No feature attribution is inferred from these measurements.</p>
+<table><thead><tr><th>Region</th><th>Native bounds</th><th>RAS centroid (mm)</th><th>Native-axis extent (mm)</th><th>Support volume (mL)</th><th>Uncalibrated score</th></tr></thead><tbody>{region_rows or '<tr><td colspan="6">No retained candidate support</td></tr>'}</tbody></table>"""
+    model_section = """<h2>Model segmentation and raw-probability heatmap</h2>
+<p><strong>Unavailable in this imported bundle.</strong> The candidate map is a postprocessed detection output; it cannot reconstruct the missing model segmentation or raw probability values.</p>"""
+    if has_model_outputs:
+        model_views = "".join(
+            f'<figure><img src="model-axis-{axis}.png" alt="CT, unvalidated model segmentation and raw class-1 probability"><figcaption>Native axis {axis}, slice {prediction_indices[axis]}</figcaption></figure>'
+            for axis in range(3)
+        )
+        model_section = f"""<h2>Model segmentation and raw-probability heatmap</h2>
+<p>These additional outputs are the stage-2 predicted class-1 segmentation and raw class-1 probability, pasted into the original grid. They are unvalidated model products. Zero padding outside the evaluated crop does not establish absence of disease. The probability overlay is uncalibrated model output, not Grad-CAM, attention or a validated explanation of the decision.</p>{model_views}"""
     if prediction_info is not None:
         run = prediction_info["run"]
         provenance = html.escape(
@@ -156,25 +180,42 @@ qform code: {info["qform_code"]}; sform code: {info["sform_code"]}; obliquity: {
 {interactive_section}
 <h2>Native CT views</h2><p>Each image shows CT and, when supplied, an existing annotation overlay. Planes are original voxel axes, not standardized radiological views. Display level 50/window 400 affects appearance only.</p>{views}
 {prediction_section}
+{region_section}
+{model_section if prediction_info is not None else ""}
 </body></html>"""
 
 
 def generate_report(
-    case: Case, output: Path, predictions: Path | None = None, *, interactive: bool = False
+    case: Case,
+    output: Path,
+    predictions: Path | None = None,
+    *,
+    interactive: bool = False,
+    measure_candidates: bool = False,
 ) -> Path:
     """Write HTML/native views, plus separate imported-prediction views if supplied."""
     if output.exists():
         raise ValueError("Output directory already exists; choose a new name to preserve it.")
-    if interactive and predictions is None:
-        raise ValueError("Interactive viewer requires a validated --predictions import.")
+    if (interactive or measure_candidates) and predictions is None:
+        raise ValueError(
+            "Interactive viewer/candidate measurements requires a validated --predictions import."
+        )
     scan = load_volume(case.scan_path)
     mask = load_volume(case.label_path) if case.label_path is not None else None
     prediction, prediction_info, prediction_indices = None, None, None
+    model_outputs, regions = {}, None
     if predictions is not None:
         from mirai_ct.panorama import load_predictions, prediction_focus
 
         prediction, prediction_info = load_predictions(case, predictions)
         prediction_indices = prediction_focus(prediction)
+        from mirai_ct.panorama_outputs import load_model_outputs
+
+        model_outputs = load_model_outputs(scan, predictions, prediction_info)
+        if measure_candidates:
+            from mirai_ct.findings import candidate_regions
+
+            regions = candidate_regions(prediction)
     rows = annotation_measurements(scan, mask) if mask is not None else []
     positives = [row for row in rows if row["label_id"] > 0]
     focus = next((row for row in positives if row["label_id"] == 2), None)
@@ -216,6 +257,40 @@ def generate_report(
                 figure.savefig(output / f"prediction-axis-{axis}.png", dpi=120)
             finally:
                 plt.close(figure)
+    if model_outputs:
+        for axis in range(3):
+            figure = plot_slice(
+                scan,
+                axis=axis,
+                index=prediction_indices[axis],
+                mask=model_outputs["segmentation"],
+                prediction=model_outputs["probability"],
+            )
+            figure.axes[1].set_title("Model class-1 segmentation (unvalidated)")
+            figure.axes[2].set_title("Raw class-1 probability (uncalibrated)")
+            figure.axes[-1].set_ylabel("Raw model probability; not attribution")
+            try:
+                figure.savefig(output / f"model-axis-{axis}.png", dpi=120)
+            finally:
+                plt.close(figure)
+    from mirai_ct.panorama_io import write_json
+
+    write_json(
+        output / "report.json",
+        {
+            "schema_version": 1,
+            "case_id": case.case_id,
+            "source_sha256": prediction_info["source_sha256"] if prediction_info else None,
+            "uncalibrated_score": prediction_info["score"] if prediction_info else None,
+            "screening_decision": "not established; no validated cutoff",
+            "candidate_regions": regions,
+            "model_segmentation_available": bool(model_outputs),
+            "raw_probability_available": bool(model_outputs),
+            "attribution_available": False,
+            "anatomical_subregion": "unassigned",
+            "clinical_validation": "not established",
+        },
+    )
     report = output / "index.html"
     report.write_text(
         _report_html(
@@ -227,6 +302,8 @@ def generate_report(
             prediction_info,
             prediction_indices,
             interactive_section,
+            regions,
+            bool(model_outputs),
         ),
         encoding="utf-8",
     )
@@ -246,13 +323,22 @@ def main() -> int:
     parser.add_argument(
         "--interactive", action="store_true", help="Add offline native-k slice navigation"
     )
+    parser.add_argument(
+        "--measure-candidates",
+        action="store_true",
+        help="Add connected candidate support geometry (requires optional SimpleITK)",
+    )
     args = parser.parse_args()
     try:
         matches = [case for case in read_cases(args.manifest) if case.case_id == args.case_id]
         if not matches:
             raise ValueError(f"Case ID not found in manifest: {args.case_id}")
         report = generate_report(
-            matches[0], args.output, args.predictions, interactive=args.interactive
+            matches[0],
+            args.output,
+            args.predictions,
+            interactive=args.interactive,
+            measure_candidates=args.measure_candidates,
         )
         print(
             json.dumps(

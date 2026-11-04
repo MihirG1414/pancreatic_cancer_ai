@@ -410,7 +410,14 @@ def validate_baseline_source(baseline: Path) -> str:
     return revision
 
 
-def run_pilot(input_dir: Path, baseline: Path, root: Path, run_dir: Path) -> Path:
+def run_pilot(
+    input_dir: Path,
+    baseline: Path,
+    root: Path,
+    run_dir: Path,
+    *,
+    include_model_outputs: bool = False,
+) -> Path:
     """Run two original pretrained stages, then package only validated outputs."""
     configure_inference_environment()
     if run_dir.exists():
@@ -528,9 +535,20 @@ def run_pilot(input_dir: Path, baseline: Path, root: Path, run_dir: Path) -> Pat
             predicted = run_dir / "output_fullres/scan.nii.gz"
             fullres_mask = sitk.ReadImage(str(predicted))
             validate_stage_grid(fullres_mask, crop.GetSize(), crop)
-            del fullres_mask, crop
+            del crop
+            model_hashes_extra = {}
             with np.load(run_dir / "output_fullres/scan.npz", allow_pickle=False) as prediction:
+                if include_model_outputs:
+                    from mirai_ct.panorama_outputs import MODEL_SEMANTICS, export_model_outputs
+
+                    raw_class1 = prediction["probabilities"][1].copy()
+                    model_hashes_extra = export_model_outputs(
+                        ct, coordinates, fullres_mask, raw_class1, bundle
+                    )
+                    record["model_outputs"] = MODEL_SEMANTICS
+                    del raw_class1
                 postprocessed = PostProcessing(prediction, str(predicted))
+            del fullres_mask
             detection, score = GetFullSizDetectionMap(postprocessed, coordinates, ct)
             validate_alignment(detection, provenance["geometry"])
             values = sitk.GetArrayViewFromImage(detection)
@@ -561,6 +579,7 @@ def run_pilot(input_dir: Path, baseline: Path, root: Path, run_dir: Path) -> Pat
                     "WEIGHTS-LICENSE.txt",
                 )
             }
+            record["output_sha256"].update(model_hashes_extra)
             record["status"] = "success"
     except Exception as exc:
         record["status"] = "failed"
@@ -593,6 +612,11 @@ def main() -> int:
     parser.add_argument("--input", type=Path)
     parser.add_argument("--baseline", type=Path)
     parser.add_argument("--run-dir", type=Path)
+    parser.add_argument(
+        "--include-model-outputs",
+        action="store_true",
+        help="Preserve native-grid class-1 segmentation and raw probability map",
+    )
     args = parser.parse_args()
     try:
         if args.action == "preflight":
@@ -608,6 +632,7 @@ def main() -> int:
                     args.baseline.resolve(),
                     args.root.resolve(),
                     args.run_dir.resolve(),
+                    include_model_outputs=args.include_model_outputs,
                 )
             )
         return 0
