@@ -38,4 +38,5 @@ must remain marked GPU-unexecuted until actual model artifacts are obtained.
 - [x] Optional runner export and backward-compatible checked import.
 - [x] Candidate geometry and explicit report availability fields.
 - [x] Reconcile audit with original requirements; document actual data/GPU gates.
-- [ ] Run checks, review, commit/push verified work and checkpoint exact next action.
+- [x] Run checks/review; commit verified source and checkpoint exact next action.
+  Final delivery push/head verification is recorded in root PROGRESS.md.

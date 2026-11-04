@@ -51,6 +51,30 @@ about 1.9 GiB available. No processes were stopped. Next: commit source to obtai
 an immutable notebook pin, enable optional output export in its nine cells,
 document old-runtime recovery check, then run final checks and push.
 
+Final milestone 5 software checkpoint: native-output source committed at
+`b4138f2ae97dc08bcd9aef96b2e37bb5f91698a2`. The nine-cell notebook now pins it
+and defaults `EXPORT_MODEL_OUTPUTS=True` (permission remains False until operator
+review). Added run-cell behavioral checks for enabled/disabled extra export.
+Added `docs/model-output-handoff.md` with a small existence check for old saved
+Colab intermediates and exact fresh-run/import/report steps if they are gone.
+No source model/weight/fold changes. Original private statement stays outside Git.
+
+Final checks: **155 Python tests passed**, **7 Node control tests passed**;
+full Ruff lint/format, pip check and whitespace passed. 57 warnings are the
+existing SimpleITK/NumPy deprecation in expanded synthetic coverage. The reviewed
+real HTML/report.json still records extra model outputs unavailable, one support
+region and unchanged score/source hashes. Created ignored
+`outputs/panorama-report-20261104-reviewed.zip` for sharing. New helper GPU
+execution and actual browser interactions remain unverified, as already stated.
+
+Exact next action: user runs the three-file old-Colab existence check in
+`docs/model-output-handoff.md`. If files exist, recover/re-export genuine saved
+segmentation/probabilities with separate provenance; if absent, run the updated
+source-pinned notebook on an authorized NVIDIA runtime and import its new bundle.
+Then verify actual model views and continue anatomical localization/attribution
+and independent evaluation. No actual independent labeled test cases confirmed.
+This is implementation progress toward phase one, not full project completion.
+
 ## In progress: milestone 4 usability and Colab reliability (2026-11-04)
 
 User authorized review of the repo/plan and continuation toward project completion.

@@ -87,3 +87,25 @@ def test_download_works_without_preview_variables(tmp_path, monkeypatch, success
         with pytest.raises(RuntimeError, match="Successful"):
             exec(compile(code_cells()[-1], "download-cell", "exec"), namespace)
         assert downloaded == []
+
+
+@pytest.mark.parametrize("export", [True, False])
+def test_notebook_run_requests_model_outputs_when_selected(tmp_path, export):
+    commands = []
+
+    def fake_run(command, **kwargs):
+        commands.append(command)
+        return SimpleNamespace(returncode=0)
+
+    namespace = {
+        "ROOT": tmp_path,
+        "PYTHON": Path(sys.executable),
+        "INPUT": tmp_path / "input",
+        "BASELINE": tmp_path / "baseline",
+        "ENV": {},
+        "EXPORT_MODEL_OUTPUTS": export,
+        "time": SimpleNamespace(strftime=lambda *args: "fixed", gmtime=lambda: None),
+        "subprocess": SimpleNamespace(run=fake_run, STDOUT=-2),
+    }
+    exec(compile(code_cells()[6], "run-cell", "exec"), namespace)
+    assert ("--include-model-outputs" in commands[0]) is export

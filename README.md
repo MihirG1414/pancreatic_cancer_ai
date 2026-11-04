@@ -20,10 +20,17 @@ optional offline slice viewer with candidate zoom, outlines and opacity.
 See the [completion review](docs/completion-review-2026-11-04.md) for remaining
 requirements and pending manual browser/GPU checks.
 
+After reviewing the original phase-one statement, optional native model
+segmentation/raw-probability exports and candidate geometry are implemented.
+They are software-tested; actual extra GPU products are not yet available.
+See [model-output handoff](docs/model-output-handoff.md) for recovery/fresh-run
+steps. `--measure-candidates` adds support-region coordinates/extents with
+explicit limits; `report.json` records output availability and the model score.
+
 Generate a fresh interactive report from the existing validated import:
 
 ```powershell
-.\.venv\Scripts\python.exe -m mirai_ct.report --manifest .\cases.local.csv --case-id pancreas_290 --predictions .\outputs\panorama-import-20261028 --interactive --output .\outputs\panorama-report-new
+.\.venv\Scripts\python.exe -m mirai_ct.report --manifest .\cases.local.csv --case-id pancreas_290 --predictions .\outputs\panorama-import-20261028 --interactive --measure-candidates --output .\outputs\panorama-report-new
 ```
 
 Open the resulting `index.html` and keep its `viewer/` folder beside it. The
