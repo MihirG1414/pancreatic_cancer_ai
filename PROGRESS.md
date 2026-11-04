@@ -83,6 +83,15 @@ promised original .md when attached, map its complete requirements to this audit
 then implement unblocked missing outputs and obtain independent test-case access.
 Do not mark the overall project or clinical validation complete.
 
+Delivery check: runtime and viewer/notebook commits through `16b841e` pushed to
+the existing branch; local and actual remote head both matched
+`16b841e44dc39368f34461504fafe740d953d948`, with clean working tree. Fetched
+the notebook's immutable runner URL from GitHub and confirmed byte equality
+with commit `c9363a9` (SHA256
+`285576897f9cedbd9abf19f4b6b0282b684b20d6fbe275fb697bf41f79160ed7`).
+This closure update records verification; push/check its own commit at session
+end. Browser and fresh-GPU checks remain pending as stated above.
+
 ## Portable chat-memory file (2026-10-28)
 
 Created `docs/project-memory-2026-10-28.md` at the user's request. It consolidates

@@ -13,7 +13,7 @@
       browser URL could not be verified for access policy; do not claim passed).
 - [x] Run full applicable tests, Ruff lint/format, dependency and whitespace checks.
 - [x] Write provisional completion audit; original problem statement still pending.
-- [ ] Update README/demo/checkpoint, commit related changes, push and verify head.
+- [x] Update README/demo/checkpoint, commit related changes, push and verify head.
 
 No training, repeated GPU run, full dataset or weight download. Preserve active
 kernels and unrelated changes. Further project scope follows the original
