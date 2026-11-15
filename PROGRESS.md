@@ -2,6 +2,34 @@
 
 Updated: 2026-11-15 (Asia/Calcutta). This is the authoritative current handoff.
 
+## Review completion resumed (2026-11-15)
+
+User's review is tomorrow (16 November). Latest scope: finish everything feasible
+without lead input; defer confirmed independent cohort, radiologist review and
+clinical validation. User confirmed Colab connected and can ask lead later.
+Resume: actual local/remote head d4627bfade3055f0d3c68dcda7d8e78291dce795;
+three untracked drafts preserved (delivery module/tests and Colab helper).
+Draft delivery tests: 2 passed; its HTML line-length lint still needed cleanup.
+No local Python inference/kernel processes active on resume. Prior 236 Python /
+7 Node checks remain recorded, with later target guards covered by 16 tests.
+
+Native read-only Colab inspection recovered the actual failure: all source/input/
+model/grid checks passed, but repeated probability max difference was
+0.0019400715827941895 > v1's 0.001 limit. The explanation cell ended with child
+exit failure; no successful explanation is claimed. The prior turn's physical
+Escape stopped Computer Use; this new user request explicitly resumes work.
+Original two-case successful inference/demos remain intact. No downloads or
+model inference were repeated simply to inspect the error.
+
+Next: numerical-control protocol v2 (two unchanged-input controls, explicit
+whole-map/target max/mean bounds and a resolution floor; preserve original
+predictions). Test before real GPU run; journal diagnostics even on rejection.
+New V2 arithmetic tests (18 total completion tests) passed, including sparse
+outliers, rejection of systematic drift and unstable controls, and genuine-source
+API wiring with a fake network. This is not actual V2 GPU execution.
+Then finish the offline entry point, real error/overlap review, extraction/browser
+acceptance and tomorrow's review guide. Record lead-dependent gates separately.
+
 ## Milestone 9 in progress: remaining phase-one software (2026-11-15)
 
 User explicitly requested completing the remaining project. Resume review found

@@ -65,7 +65,7 @@ def test_occlusion_uses_fixed_target_and_signed_effects(tmp_path):
     calls.clear()
     journal = tmp_path / "explanation.json"
     result = calculate_effects(x, target, saved, blocks, predict, fill_value=0.5, journal=journal)
-    assert len(calls) == 9
+    assert len(calls) == 10
     assert np.array_equal(x, np.arange(64, dtype=np.float32).reshape(4, 4, 4) / 64)
     for block, effect in zip(blocks, result["blocks"], strict=True):
         a, b = block
@@ -77,7 +77,7 @@ def test_occlusion_uses_fixed_target_and_signed_effects(tmp_path):
     assert any(b["effect"] > 0 for b in result["blocks"])
     assert result["status"] == "success"
     resumed = calculate_effects(x, target, saved, blocks, predict, fill_value=0.5, journal=journal)
-    assert resumed == result and len(calls) == 9
+    assert resumed == result and len(calls) == 10
     with pytest.raises(ValueError, match="identity"):
         calculate_effects(x, target, saved, blocks, predict, fill_value=0.1, journal=journal)
 
@@ -101,7 +101,7 @@ def test_occlusion_refuses_nonreproducing_model_and_resumes_completed_passes(tmp
     journal = tmp_path / "resume.json"
     with pytest.raises(RuntimeError, match="disconnection"):
         calculate_effects(x, x > 0, x, blocks, interrupted, journal=journal, fill_value=0.5)
-    assert len(json.loads(journal.read_text())["blocks"]) == 2
+    assert len(json.loads(journal.read_text())["blocks"]) == 1
     calls = 0
     result = calculate_effects(x, x > 0, x, blocks, lambda a: a, journal=journal, fill_value=0.5)
     assert result["status"] == "success" and len(result["blocks"]) == 8
@@ -361,7 +361,46 @@ def test_gpu_adapter_preserves_saved_axis_order_full_ensemble_and_tta(tmp_path, 
     path = adapter._explain_run(tmp_path, tmp_path / "baseline", tmp_path, exported, output)
     data = json.loads(path.read_text())
     assert data["status"] == "success" and data["spec"]["identity"]["target_voxel_count"] == 36
-    assert sum(name == "predict" for name, _ in calls) == 9
+    assert sum(name == "predict" for name, _ in calls) == 10
     assert calls[0][1]["use_mirroring"] is True and calls[0][1]["tile_step_size"] == 0.5
     assert calls[1][1]["use_folds"] == (0, 1, 2, 3, 4)
     assert calls[1][1]["checkpoint_name"] == "checkpoint_best_panorama.pth"
+
+
+def test_control_protocol_accepts_sparse_roundoff_but_rejects_systematic_drift(tmp_path):
+    from mirai_ct.occlusion import calculate_effects, partition_bounds
+
+    x = np.zeros((4, 4, 4), np.float32)
+    ref = np.full_like(x, 0.5)
+    target = np.ones_like(x, dtype=bool)
+    blocks = partition_bounds([0, 0, 0], [4, 4, 4])
+    sparse = ref.copy()
+    sparse[0, 0, 0] += 0.002
+    result = calculate_effects(
+        x, target, ref, blocks, lambda a: sparse, journal=tmp_path / "sparse.json"
+    )
+    assert result["baseline_max_error"] > 0.001
+    assert len(result["controls"]) == 2 and result["control_floor"] >= 0.0001
+    with pytest.raises(ValueError, match="reproduc"):
+        calculate_effects(
+            x, target, ref, blocks, lambda a: ref + 0.002, journal=tmp_path / "biased.json"
+        )
+    assert (tmp_path / "biased-controls.json").is_file()
+    assert not (tmp_path / "biased.json").exists()
+
+
+def test_control_protocol_rejects_unstable_repeats(tmp_path):
+    from mirai_ct.occlusion import calculate_effects, partition_bounds
+
+    x = np.zeros((4, 4, 4), np.float32)
+    ref = np.full_like(x, 0.5)
+    outputs = iter([ref, ref + 0.01])
+    with pytest.raises(ValueError, match="reproduc"):
+        calculate_effects(
+            x,
+            x == 0,
+            ref,
+            partition_bounds([0, 0, 0], [4, 4, 4]),
+            lambda a: next(outputs),
+            journal=tmp_path / "unstable.json",
+        )

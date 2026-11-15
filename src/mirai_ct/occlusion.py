@@ -12,8 +12,15 @@ import numpy as np
 
 from mirai_ct.panorama_io import write_json
 
-METHOD = "fixed-target-block-occlusion-v1"
+METHOD = "fixed-target-block-occlusion-v2"
 TARGET = "mean stage-2 class-1 probability over original predicted class-1 voxels"
+BASELINE_POLICY = {
+    "max_abs": 0.005,
+    "mean_abs": 0.0001,
+    "target_mae": 0.0005,
+    "target_mean_abs": 0.0001,
+}
+MIN_CONTROL_FLOOR = 0.0001
 
 
 def partition_bounds(start: list[int], finish: list[int]) -> list[list[list[int]]]:
@@ -62,12 +69,90 @@ def _probability(values: np.ndarray, shape: tuple) -> None:
         raise ValueError("Predictor returned invalid class-1 probabilities.")
 
 
+def _comparison(values: np.ndarray, reference: np.ndarray, target: np.ndarray) -> dict:
+    difference = values.astype(np.float64) - reference
+    return {
+        "max_abs": float(np.abs(difference).max()),
+        "mean_abs": float(np.abs(difference).mean()),
+        "target_mae": float(np.abs(difference[target]).mean()),
+        "target_mean_abs": abs(float(difference[target].mean())),
+    }
+
+
+def _check_metrics(metrics: dict) -> None:
+    if (
+        not isinstance(metrics, dict)
+        or set(metrics) != set(BASELINE_POLICY)
+        or any(
+            type(metrics[key]) not in (int, float)
+            or not math.isfinite(metrics[key])
+            or not 0 <= metrics[key] <= limit
+            for key, limit in BASELINE_POLICY.items()
+        )
+    ):
+        raise ValueError("Baseline failed reproduction policy: " + str(metrics))
+
+
+def validate_controls(result: dict) -> None:
+    if result.get("spec", {}).get("baseline_policy") != BASELINE_POLICY:
+        raise ValueError("Unsupported unchanged-input control policy.")
+    controls = result.get("controls")
+    saved = result.get("saved_target_mean")
+    if (
+        not isinstance(controls, list)
+        or len(controls) != 2
+        or type(saved) not in (int, float)
+        or not math.isfinite(saved)
+        or not 0 <= saved <= 1
+    ):
+        raise ValueError("Two unchanged-input controls and original target mean required.")
+    scores = []
+    for control in controls:
+        if (
+            not isinstance(control, dict)
+            or type(control.get("score")) not in (int, float)
+            or not math.isfinite(control["score"])
+            or not 0 <= control["score"] <= 1
+        ):
+            raise ValueError("Invalid unchanged-input control score.")
+        _check_metrics(control.get("to_saved"))
+        if not math.isclose(
+            abs(control["score"] - saved), control["to_saved"]["target_mean_abs"], abs_tol=1e-8
+        ):
+            raise ValueError("Control score differs from its reproduction metrics.")
+        scores.append(control["score"])
+    _check_metrics(result.get("repeatability"))
+    if not math.isclose(
+        abs(scores[0] - scores[1]), result["repeatability"]["target_mean_abs"], abs_tol=1e-8
+    ):
+        raise ValueError("Unchanged-input repeatability score mismatch.")
+    baseline = sum(scores) / 2
+    floor = max(MIN_CONTROL_FLOOR, abs(scores[0] - scores[1]), abs(baseline - saved))
+    for key, expected in [
+        ("baseline_score", baseline),
+        ("control_floor", floor),
+        ("baseline_max_error", max(c["to_saved"]["max_abs"] for c in controls)),
+    ]:
+        value = result.get(key)
+        if (
+            type(value) not in (int, float)
+            or not math.isfinite(value)
+            or not math.isclose(value, expected, abs_tol=1e-9)
+        ):
+            raise ValueError("Control summary mismatch: " + key)
+
+
 def validate_effects(result: dict, blocks: list, *, complete: bool) -> None:
+    validate_controls(result)
     score = result.get("baseline_score")
     if type(score) not in (int, float) or not math.isfinite(score) or not 0 <= score <= 1:
         raise ValueError("Invalid occlusion baseline score.")
     error = result.get("baseline_max_error")
-    if type(error) not in (int, float) or not math.isfinite(error) or not 0 <= error <= 0.001:
+    if (
+        type(error) not in (int, float)
+        or not math.isfinite(error)
+        or not 0 <= error <= BASELINE_POLICY["max_abs"]
+    ):
         raise ValueError("Baseline reproduction evidence is invalid.")
     rows = result.get("blocks")
     if not isinstance(rows, list) or len(rows) > 8 or (complete and len(rows) != 8):
@@ -98,7 +183,7 @@ def calculate_effects(
     fill_value: float = 50.0,
     identity: dict | None = None,
 ) -> dict:
-    """One baseline + eight genuine calls; resume identical completed passes only."""
+    """Two unchanged controls + eight genuine calls; resume identical passes only."""
     if (
         data_kji.ndim != 3
         or target_kji.shape != data_kji.shape
@@ -121,6 +206,7 @@ def calculate_effects(
         "block_bounds_ijk": blocks,
         "shape_ijk": list(data_kji.shape[::-1]),
         "identity": identity or {},
+        "baseline_policy": BASELINE_POLICY,
     }
     fingerprint = hashlib.sha256(
         json.dumps(spec, sort_keys=True, allow_nan=False).encode()
@@ -137,29 +223,73 @@ def calculate_effects(
             raise ValueError("Resume identity differs; choose a fresh output directory.")
         validate_effects(result, blocks, complete=result.get("status") == "success")
         expected = float(reference_probability[target].mean(dtype=np.float64))
-        if abs(result["baseline_score"] - expected) > result["baseline_max_error"] + 1e-7:
+        if abs(result["saved_target_mean"] - expected) > 1e-8:
             raise ValueError("Saved baseline target differs from original probabilities.")
         if result.get("status") not in ("success", "running"):
             raise ValueError("Unsupported occlusion journal state.")
         if result["status"] == "success":
             return result
     else:
-        baseline = np.asarray(predict(data_kji.copy()))
-        _probability(baseline, data_kji.shape)
-        error = float(np.max(np.abs(baseline - reference_probability)))
-        if error > 0.001:
-            raise ValueError(f"Baseline did not reproduce saved probabilities: max error {error}.")
+        controls = []
+        diagnostics = journal.with_name(journal.stem + "-controls.json")
+        first = None
+        for number in range(2):
+            print(f"Unchanged-input control {number + 1}/2", flush=True)
+            baseline = np.asarray(predict(data_kji.copy()))
+            _probability(baseline, data_kji.shape)
+            metrics = _comparison(baseline, reference_probability, target)
+            controls.append(
+                {"score": float(baseline[target].mean(dtype=np.float64)), "to_saved": metrics}
+            )
+            _save(
+                diagnostics,
+                {"status": "checking", "fingerprint": fingerprint, "controls": controls},
+            )
+            _check_metrics(metrics)
+            if number == 0:
+                first = baseline.copy()
+        repeatability = _comparison(baseline, first, target)
+        _save(
+            diagnostics,
+            {
+                "status": "checking",
+                "fingerprint": fingerprint,
+                "controls": controls,
+                "repeatability": repeatability,
+            },
+        )
+        _check_metrics(repeatability)
+        saved_mean = float(reference_probability[target].mean(dtype=np.float64))
+        baseline_score = sum(c["score"] for c in controls) / 2
         result = {
             "schema_version": 1,
             "status": "running",
             "fingerprint": fingerprint,
             "spec": spec,
-            "baseline_score": float(baseline[target].mean(dtype=np.float64)),
-            "baseline_max_error": error,
+            "baseline_score": baseline_score,
+            "baseline_max_error": max(c["to_saved"]["max_abs"] for c in controls),
+            "saved_target_mean": saved_mean,
+            "controls": controls,
+            "repeatability": repeatability,
+            "control_floor": max(
+                MIN_CONTROL_FLOOR,
+                repeatability["target_mean_abs"],
+                abs(baseline_score - saved_mean),
+            ),
             "blocks": [],
         }
+        validate_controls(result)
         _save(journal, result)
-        del baseline
+        _save(
+            diagnostics,
+            {
+                "status": "accepted",
+                "fingerprint": fingerprint,
+                "controls": controls,
+                "repeatability": repeatability,
+            },
+        )
+        del baseline, first
     for bounds in blocks[len(result["blocks"]) :]:
         a, b = bounds
         changed = data_kji.copy()

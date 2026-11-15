@@ -37,10 +37,9 @@ The GPU-only `mirai_ct.panorama_explain` command reuses a successful run's saved
 crop, multiclass labels, raw probabilities and already verified checkpoints.
 It does not modify the original run or model weights. It checks original CT
 export/crop identity, native geometry, bundled products, source pins, environment
-and all five folds. It repeats the baseline then eight input block ablations
+and all five folds. It repeats two unchanged-input controls then eight input block ablations
 using all five folds/default TTA. The fixed target is mean class-1 probability
-over the original predicted class-1 voxels. A baseline discrepancy >0.001 in any
-voxel refuses acceptance. Nine passes may take considerably longer than the
+over the original predicted class-1 voxels. Version 2 uses the explicit control policy below; ten passes may take considerably longer than the
 original inference; actual duration is not yet measured.
 
 Each block replaces input with stored intensity 50; HU calibration is still
@@ -105,3 +104,30 @@ Implemented/tested software is distinct from received real evidence:
 
 Synthetic CTs and fake networks can test software, not fill clinical evaluation
 or explanation evidence gaps. The original private statement is not published.
+
+## Numerical-control revision after actual GPU check
+
+The first real explanation attempt (v1) stopped safely: the repeated prediction's
+largest voxel difference was 0.0019400716, exceeding its 0.001 rule. Inputs,
+weights, numerical versions and original native products passed identity checks.
+That attempt did not produce an accepted explanation. Floating-point GPU results
+need not be bitwise identical; see [PyTorch reproducibility](https://docs.pytorch.org/docs/stable/notes/randomness.html)
+and [numerical accuracy](https://docs.pytorch.org/docs/stable/notes/numerical_accuracy.html).
+This does not by itself prove that a particular discrepancy is harmless.
+
+V2 adds two unchanged-input controls before ablation. Each control vs the saved
+map, and the controls vs one another, must meet *all* predeclared engineering
+bounds: max absolute difference <=0.005, whole-crop mean absolute difference
+<=0.0001, fixed-lesion-target mean absolute voxel difference <=0.0005, and
+absolute fixed-target mean-score difference <=0.0001. These are our software
+acceptance bounds for approximate conditional input sensitivity, not published
+clinical tolerances. Compared with v1, a sparse outlier has more allowance but
+systematic/target drift has additional strict checks. Do not keep raising bounds
+to force a successful result if this protocol fails.
+
+Effects use the mean of the two fresh control scores. A control-resolution floor
+is max(0.0001, control-score difference, control-mean vs saved-target difference).
+All signed block effects remain in the table; only effects exceeding this floor
+are colored. This is not a confidence interval or statistical significance test.
+Unchanged-control metrics are journaled even if acceptance fails. Original
+predictions are preserved; no alteration is presented as the original model run.

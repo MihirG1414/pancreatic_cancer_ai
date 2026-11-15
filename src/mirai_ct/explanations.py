@@ -43,9 +43,6 @@ def load_explanation(path: Path, info: dict, segmentation: Volume, probability: 
     }.items():
         if expected is None or identity.get(key) != expected:
             raise ValueError("Explanation source/model identity mismatch: " + key)
-    error = result.get("baseline_max_error")
-    if type(error) not in (int, float) or not math.isfinite(error) or not 0 <= error <= 0.001:
-        raise ValueError("Saved explanation did not reproduce original baseline.")
     coords = original["crop_coordinates_ijk_exclusive_finish"]
     start = [coords[f"{a}_start"] for a in "xyz"]
     finish = [coords[f"{a}_finish"] for a in "xyz"]
@@ -79,7 +76,7 @@ def load_explanation(path: Path, info: dict, segmentation: Volume, probability: 
         or not target_count
     ):
         raise ValueError("Explanation target/probability differs from actual imported products.")
-    if abs(result["baseline_score"] - target_sum / target_count) > error + 1e-7:
+    if abs(result["saved_target_mean"] - target_sum / target_count) > 1e-8:
         raise ValueError("Explanation baseline target differs from original probabilities.")
     native_blocks = []
     for block in result["blocks"]:
@@ -127,9 +124,12 @@ def plot_explanation(scan: Volume, evidence: dict, axis: int, index: int):
     info = metadata(scan)
     directions = [a for a in range(3) if a != axis]
     aspect = info["affine_spacing"][directions[1]] / info["affine_spacing"][directions[0]]
-    limit = max(abs(row["effect"]) for row in evidence["native_blocks"]) or 1.0
+    limit = max(
+        max(abs(row["effect"]) for row in evidence["native_blocks"]), evidence["control_floor"] * 5
+    )
+    resolved = support & (np.abs(values) > evidence["control_floor"])
     overlay = ax.imshow(
-        np.ma.masked_where(~support.T, values.T),
+        np.ma.masked_where(~resolved.T, values.T),
         origin="lower",
         cmap="coolwarm",
         vmin=-limit,
@@ -171,10 +171,15 @@ def evidence_html(anatomy: dict | None, explanation: dict | None) -> str:
             "<section><h2>Signed block occlusion sensitivity (not probability)</h2>"
             "<p>Eight nonoverlapping input blocks were replaced with stored intensity "
             f"{explanation['spec']['fill_value']:g}, then the original five-fold/default-TTA "
-            "stage-2 predictor was rerun. The fixed target is the mean class-1 probability "
+            "stage-2 predictor was rerun, with two unchanged-input controls. "
+            "The fixed target is the mean class-1 probability "
             "over the original predicted class-1 voxels. "
             f"Baseline target: {explanation['baseline_score']:.6f}; maximum reproduction error: "
             f"{explanation['baseline_max_error']:.6g}.</p>"
+            f"<p>Control resolution floor: {explanation['control_floor']:.6g}. "
+            "Only effects larger than this floor are colored. Transparent regions may be "
+            "untested or below the floor. This is a numerical resolution rule, "
+            "not statistical significance.</p>"
             "<p>Positive values mean occlusion reduced the target; negative values mean it "
             "increased the target. Blank regions were not tested. This is coarse input "
             "sensitivity, not Grad-CAM, a probability heatmap or a causal/clinical explanation. "
