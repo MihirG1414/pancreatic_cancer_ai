@@ -1,5 +1,11 @@
 # Bounded public CT pilot — 15 November 2026
 
+Later same-day update: the matched RTSTRUCT is now converted and its source CT
+links/native saved grid checked. See [the current demo checkpoint](demo-ready-2026-11-15.md)
+for counts, overlay report, new reference manifest and model-comparison command.
+Earlier statements below that reference-mask conversion is pending describe the
+initial acquisition checkpoint. Second-case model inference remains pending.
+
 ## Source choice
 
 The [official PANORAMA source](https://github.com/DIAGNijmegen/panorama_labels)

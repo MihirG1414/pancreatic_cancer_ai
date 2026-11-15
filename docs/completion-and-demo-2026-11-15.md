@@ -1,5 +1,11 @@
 # Phase-one completion and demo checkpoint — 15 November 2026
 
+**Earlier milestone-6 snapshot.** Later on the same day, actual GPU model products
+were received and checked and the second CT's reference mask was converted.
+Use [the latest demo checkpoint](demo-ready-2026-11-15.md) for current results,
+artifact paths and remaining requirements; historical pending items below are
+superseded where that checkpoint records completion.
+
 ## What works
 
 The project already has a real pretrained PANORAMA inference result, not just a

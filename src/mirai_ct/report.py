@@ -61,6 +61,8 @@ def annotation_measurements(scan: Volume, mask: Volume) -> list[dict]:
 
 
 def _name(label_id: int, source: str) -> str:
+    if label_id == 0:
+        return "Background"
     if "msd task07" in source.lower():
         return MSD_LABELS.get(label_id, "Unknown label")
     return "Unverified label meaning"
@@ -78,13 +80,20 @@ def _report_html(
     regions: list[dict] | None = None,
     has_model_outputs: bool = False,
     evaluation_section: str = "",
+    summary: dict | None = None,
+    model_measurements: dict | None = None,
+    annotation_info: dict | None = None,
 ) -> str:
     info = metadata(scan)
     source = html.escape(case.dataset_source)
     title = html.escape(case.case_id)
     table_rows = []
     for row in rows:
-        name = html.escape(_name(row["label_id"], case.dataset_source))
+        name = html.escape(
+            annotation_info["description"]
+            if annotation_info is not None and row["label_id"] == annotation_info["label_id"]
+            else _name(row["label_id"], case.dataset_source)
+        )
         bbox = (
             f"{row['bbox_min_ijk']} to {row['bbox_max_ijk']}"
             if row["bbox_min_ijk"] is not None
@@ -131,7 +140,14 @@ def _report_html(
             for axis in range(3)
         )
         model_section = f"""<h2>Model segmentation and raw-probability heatmap</h2>
-<p>These additional outputs are the stage-2 predicted class-1 segmentation and raw class-1 probability, pasted into the original grid. They are unvalidated model products. Zero padding outside the evaluated crop does not establish absence of disease. The probability overlay is uncalibrated model output, not Grad-CAM, attention or a validated explanation of the decision.</p>{model_views}"""
+<p>These additional outputs are the stage-2 predicted class-1 segmentation and raw class-1 probability, pasted into the original grid. They are unvalidated model products. Zero padding outside the evaluated crop does not establish absence of disease. The probability overlay is uncalibrated model output, not Grad-CAM, attention or a validated explanation of the decision. Display opacity increases with raw probability so near-zero values leave CT visible; stored values and the fixed 0–1 color scale are unchanged.</p>{model_views}"""
+        if model_measurements is not None:
+            model_section += f"""<h3>Measurements of the actual predicted mask</h3>
+<p>Predicted mask volume: {model_measurements["volume_ml"]:.4f} mL; {model_measurements["voxel_count"]:,} voxels.<br>
+Inclusive native bounds: {model_measurements["bounds_ijk_inclusive"]}<br>
+Native-axis bounding extents (mm): {model_measurements["extent_mm_native_axes"]}<br>
+RAS centroid (mm): {model_measurements["centroid_ras_mm"]}</p>
+<p>These measurements include all positive model voxels, including disconnected parts. They are unvalidated; bounding extent is not clinical tumor diameter. A zero mask does not establish absence of disease outside the evaluated crop.</p>"""
     if prediction_info is not None:
         run = prediction_info["run"]
         provenance = html.escape(
@@ -160,12 +176,20 @@ def _report_html(
 <p>The map contains extracted candidate values from the baseline postprocessing. It is not Grad-CAM, a validated tumor segmentation, or a calibrated clinical risk probability. Zero values indicate no retained candidate value; they do not establish absence of disease. The score equals the map maximum. Output hashes and the native physical grid were checked during import; no resampling was used. Provenance is supplied by the run and is not cryptographic proof of execution.</p>
 <p>Existing dataset annotations and model values appear in separate panels and legends. The source annotation never guided model preprocessing, segmentation, crop or detection. The static candidate views use the native k slice with the largest positive candidate cross-section (earliest tie), with i/j centered on that slice's candidate bounds; an all-zero map uses middle slices. This selection is for display only, not a tumor-boundary measurement.</p>
 <details><summary>Run provenance and unresolved input suitability</summary><pre>{provenance}</pre></details>{prediction_views}"""
+    summary_html = ""
+    if summary is not None:
+        sentences = "".join(f"<li>{html.escape(s)}</li>" for s in summary["sentences"])
+        summary_html = f'<section class="notice"><h2>Research findings summary</h2><ul>{sentences}</ul></section>'
+    annotation_note = ""
+    if annotation_info is not None:
+        annotation_note = f"""<p>Reference provenance checked against CT and mask SHA256. Selected source ROI {annotation_info["roi_number"]}: {html.escape(annotation_info["roi_name"])}; label {annotation_info["label_id"]}. Rasterization: {html.escape(annotation_info["rasterization"])}. This is a derived source annotation, not a model prediction or clinical diagnosis.</p>"""
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>Case report: {title}</title>
 <style>body{{font:16px/1.5 system-ui,sans-serif;max-width:1200px;margin:2rem auto;padding:0 1rem;color:#18252b}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #aaa;padding:.4rem;text-align:left}}img{{max-width:100%;height:auto}}figure{{margin:2rem 0}}.notice{{background:#eef5f8;padding:1rem}}.viewer-controls{{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;padding:1rem;background:#eef5f8}}.viewer-panels{{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}}.viewer-panels figure{{margin:0;min-width:0}}.viewer-panels canvas{{width:100%;height:auto;image-rendering:pixelated;background:#000}}button,select{{font:inherit;padding:.3rem}}@media(max-width:700px){{.viewer-panels{{grid-template-columns:1fr}}}}pre{{white-space:pre-wrap;overflow-wrap:anywhere}}</style></head>
 <body><h1>PANORAMA CT research report: {title}</h1>
 <p class="notice"><strong>Dataset annotation measurements are not a model prediction, clinical diagnosis, or performance result.</strong> Original CT and annotation files were read without modification. Model outputs, when imported, are labeled separately.</p>
 <p>Dataset source: {source}</p>
+{summary_html}
 <h2>CT geometry</h2>
 <p>Dimensions (i, j, k): {info["shape"]} voxels<br>
 Header spacing: {info["spacing"]} {html.escape(info["spatial_units"])}<br>
@@ -175,7 +199,8 @@ qform code: {info["qform_code"]}; sform code: {info["sform_code"]}; obliquity: {
 <h3>Geometry warnings</h3>{warnings}
 <p>Supplied annotation geometry: {"matched CT shape, units, spacing and affine; source pairing still requires dataset verification" if has_mask else "no annotation supplied"}.</p>
 <h2>Dataset annotation measurements</h2>
-<p>Label meanings follow the MSD Task07 dataset.json only when the manifest names that dataset. Unknown IDs are not interpreted. Voxels are counted in native geometry. Volume uses the absolute affine determinant and documented spatial units; 1 mL = 1,000 mm³. Background is included in counts but has no region box.</p>
+{annotation_note}
+<p>Label meanings follow the MSD Task07 dataset.json when the manifest names that dataset, or an explicitly supplied source-reference provenance record checked against the CT and mask hashes. Other IDs are not interpreted. Voxels are counted in native geometry. Volume uses the absolute affine determinant and documented spatial units; 1 mL = 1,000 mm³. Background is included in counts but has no region box.</p>
 <p>Bounding boxes use original NIfTI voxel indices (i, j, k), zero-based with both minimum and maximum <strong>inclusive</strong>. They enclose all voxels of each label, including disconnected regions. They are axis-aligned in voxel space; direction letters above indicate increasing indices. These are not head/body/tail assignments.</p>
 <table><thead><tr><th>Label ID</th><th>Meaning</th><th>Voxel count</th><th>Bounding box, inclusive</th><th>Physical volume</th></tr></thead><tbody>{"".join(table_rows) if rows else '<tr><td colspan="5">No annotation supplied</td></tr>'}</tbody></table>
 {interactive_section}
@@ -196,6 +221,7 @@ def generate_report(
     measure_candidates: bool = False,
     reference_label: int | None = None,
     reference_description: str = "",
+    annotation_provenance: Path | None = None,
 ) -> Path:
     """Write HTML/native views, plus separate imported-prediction views if supplied."""
     if output.exists():
@@ -219,6 +245,13 @@ def generate_report(
         evaluation_section = comparison_html(evaluation)
     scan = load_volume(case.scan_path)
     mask = load_volume(case.label_path) if case.label_path is not None else None
+    annotation_info = None
+    if annotation_provenance is not None:
+        from mirai_ct.rtstruct import load_reference_provenance
+
+        annotation_info = load_reference_provenance(
+            case.scan_path, case.label_path, annotation_provenance
+        )
     prediction, prediction_info, prediction_indices = None, None, None
     model_outputs, regions = {}, None
     if predictions is not None:
@@ -233,6 +266,12 @@ def generate_report(
             from mirai_ct.findings import candidate_regions
 
             regions = candidate_regions(prediction)
+    from mirai_ct.findings import findings_summary, segmentation_measurements
+
+    model_measurements = (
+        segmentation_measurements(model_outputs["segmentation"]) if model_outputs else None
+    )
+    summary = findings_summary(prediction_info, regions, model_measurements)
     rows = annotation_measurements(scan, mask) if mask is not None else []
     positives = [row for row in rows if row["label_id"] > 0]
     focus = next((row for row in positives if row["label_id"] == 2), None)
@@ -282,6 +321,7 @@ def generate_report(
                 index=prediction_indices[axis],
                 mask=model_outputs["segmentation"],
                 prediction=model_outputs["probability"],
+                probability_overlay=True,
             )
             figure.axes[1].set_title("Model class-1 segmentation (unvalidated)")
             figure.axes[2].set_title("Raw class-1 probability (uncalibrated)")
@@ -307,6 +347,9 @@ def generate_report(
             "anatomical_subregion": "unassigned",
             "clinical_validation": "not established",
             "reference_comparison": evaluation,
+            "findings_summary": summary,
+            "model_segmentation_measurements": model_measurements,
+            "annotation_provenance": annotation_info,
         },
     )
     report = output / "index.html"
@@ -323,6 +366,9 @@ def generate_report(
             regions,
             bool(model_outputs),
             evaluation_section,
+            summary,
+            model_measurements,
+            annotation_info,
         ),
         encoding="utf-8",
     )
@@ -349,6 +395,9 @@ def main() -> int:
     )
     parser.add_argument("--reference-label", type=int, help="Explicit annotation ID to compare")
     parser.add_argument("--reference-description", default="", help="Source and meaning of that ID")
+    parser.add_argument(
+        "--annotation-provenance", type=Path, help="Source reference.json to validate"
+    )
     args = parser.parse_args()
     try:
         matches = [case for case in read_cases(args.manifest) if case.case_id == args.case_id]
@@ -362,6 +411,7 @@ def main() -> int:
             measure_candidates=args.measure_candidates,
             reference_label=args.reference_label,
             reference_description=args.reference_description,
+            annotation_provenance=args.annotation_provenance,
         )
         print(
             json.dumps(

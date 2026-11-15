@@ -1,0 +1,3 @@
+# Optional CPU parser for source DICOM RTSTRUCT and conventional CT metadata.
+# No pixel decoder or inference framework is required for contour conversion.
+pydicom==3.0.1

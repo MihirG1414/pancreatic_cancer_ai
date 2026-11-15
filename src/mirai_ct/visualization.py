@@ -16,6 +16,7 @@ def plot_slice(
     level: float = 50,
     window: float = 400,
     prediction: Volume | None = None,
+    probability_overlay: bool = False,
 ) -> Figure:
     """Plot one plane, respecting pixel spacing; never reorient/resample a volume."""
     if not np.isfinite(window) or window <= 0 or not np.isfinite(level):
@@ -92,12 +93,19 @@ def plot_slice(
             interpolation="nearest",
             vmin=0,
             vmax=1,
-            alpha=0.65,
+            alpha=0.65 * prediction_plane.T if probability_overlay else 0.65,
             aspect=aspect,
         )
-        fig.colorbar(overlay, ax=ax, label="Uncalibrated candidate score", shrink=0.65)
+        fig.colorbar(
+            overlay,
+            ax=ax,
+            label="Uncalibrated model probability"
+            if probability_overlay
+            else "Uncalibrated candidate score",
+            shrink=0.65,
+        )
         ax.set_title(
-            "PANORAMA candidate detection map"
+            ("Raw model probability" if probability_overlay else "PANORAMA candidate detection map")
             + ("\nNo candidate values on slice" if prediction_plane.max() == 0 else "")
         )
     fig.suptitle(

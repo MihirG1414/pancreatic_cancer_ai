@@ -36,6 +36,30 @@ def test_existing_mask_overlay_and_physical_aspect(tmp_path):
     plt.close(fig)
 
 
+def test_probability_overlay_keeps_zero_background_transparent_and_preserves_values(tmp_path):
+    from mirai_ct.panorama_io import sha256_file
+
+    scan, _ = images(tmp_path)
+    values = np.zeros(scan.shape, dtype=np.float32)
+    values[2, 3, 4] = 0.05
+    values[3, 3, 4] = 0.9
+    path = tmp_path / "probability.nii.gz"
+    image = nib.Nifti1Image(values, scan.affine, header=scan.header)
+    image.header.set_data_dtype(np.float32)
+    nib.save(image, path)
+    before = sha256_file(path)
+    fig = plot_slice(scan, axis=2, index=4, prediction=load_volume(path), probability_overlay=True)
+    try:
+        opacity = fig.axes[1].images[1].get_alpha()
+        assert opacity[0, 0] == 0
+        assert 0 < opacity[3, 2] < opacity[3, 3] < 1
+        assert "probability" in fig.axes[-1].get_ylabel()
+        assert sha256_file(path) == before
+        fig.canvas.draw()
+    finally:
+        plt.close(fig)
+
+
 def test_overlay_mismatch_refuses_to_render(tmp_path):
     scan, mask = images(tmp_path)
     mask.affine[0, 3] += 10

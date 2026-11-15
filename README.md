@@ -22,7 +22,10 @@ requirements and pending manual browser/GPU checks.
 
 After reviewing the original phase-one statement, optional native model
 segmentation/raw-probability exports and candidate geometry are implemented.
-They are software-tested; actual extra GPU products are not yet available.
+Actual extra GPU products were received and verified on 2026-11-15. The current
+demo has a genuine predicted mask, raw probability heatmap, mask measurements
+and single-case annotation overlap. See the [current demo and exact remaining
+gates](docs/demo-ready-2026-11-15.md); raw probability is not decision attribution.
 See [model-output handoff](docs/model-output-handoff.md) for recovery/fresh-run
 steps. `--measure-candidates` adds support-region coordinates/extents with
 explicit limits; `report.json` records output availability and the model score.
@@ -30,7 +33,8 @@ explicit limits; `report.json` records output availability and the model score.
 2026-11-15: added checked conventional DICOM intake, explicit native-grid overlap
 and patient-separated case-score evaluation, and a one-command Colab ZIP-to-demo
 builder. Acquired/converted one additional CPTAC-PDA CT with a matched source
-annotation; inference and reference-mask conversion on that case are pending.
+annotation. Its RTSTRUCT is now converted to a checked native reference mask;
+inference on that second case remains pending.
 See [current completion/demo steps](docs/completion-and-demo-2026-11-15.md) and
 [public-data selection/checks](docs/public-ct-pilot-2026-11-15.md). The existing
 case's candidate-support overlap is measured separately from unavailable actual

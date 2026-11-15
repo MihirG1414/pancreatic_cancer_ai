@@ -2,6 +2,96 @@
 
 Updated: 2026-11-15 (Asia/Calcutta). This is the authoritative current handoff.
 
+## Milestone 7 complete locally: genuine mask/heatmap demo and source reference (2026-11-15)
+
+Current result: `outputs/panorama-demo-final-20261115/index.html` and shareable
+`outputs/panorama-demo-final-20261115.zip` (10,382,959 bytes; SHA256
+`6e2f42747151c069bf6a7880bdac7293d421eb60c0f661d9f32beb6813704ee0`).
+This report now uses genuine GPU class-1 mask/probability products, with findings
+summary, measured model volume/centroid/box and single-case Dice/IoU. All three
+final real model PNGs visually inspected after opacity correction; all report
+JSON/HTML values, 388 viewer assets and ZIP CRC/contents checked. Original CT,
+candidate map, model-product hashes and scores unchanged. Old reports preserved.
+
+Final software checks: **216 Python tests passed**, **7 Node viewer tests passed**;
+full Ruff lint/format, pip check, Markdown links and Git whitespace passed.
+83 warnings are the existing SimpleITK/NumPy shape deprecation in expanded
+coverage. Torch/scipy remain absent locally. No GPU/weight/dataset download
+was repeated locally. Actual browser interactions remain pending tool/user
+acceptance, separate from PNG and automated JS checks.
+
+Current guide: `docs/demo-ready-2026-11-15.md`; it supersedes the earlier same-day
+milestone-6 snapshot. Source code and reference masks are software/integrity
+checked, not clinical validation. Head/body/tail, decision attribution, independent
+positive/negative evaluation, FROC/error review and clinical review remain open.
+
+Exact next action: receive the second CT's genuine Colab ZIP (user has the
+input-switch/cells 5/7/8/9 instructions). Import/build with
+`cases.cptac.reference.local.csv`, existing `...input-20261115-ready`, explicit
+reference label 1 and `--annotation-provenance` pointing to its reference.json;
+require actual model products and inspect alignment/measurements. Do not infer
+PDAC diagnosis/independence from its source ROI, fabricate missing attribution or
+call the overall project clinically complete. Commit/push and actual remote-head
+verification follow the completed checks below.
+
+User needs a demonstrable research pipeline today and authorizes continuing local
+work while Colab runs. VPN was identified by the user and disconnected. Latest
+weights command exited on the Dataset104 partial; instructed removal of ONLY
+that named partial and retry cell 6, preserving completed archives. New genuine
+segmentation/probability ZIP remains pending. Do not disrupt the Colab session.
+
+Resume: clean local/actual remote head `f739e067e61a30d23daa6366ce6c611da874c9be`;
+no local Python kernel/inference processes found; existing outputs preserved.
+Available RAM about 1,942 MiB. Existing pydicom/scipy absent; use only a small
+optional DICOM parsing dependency for the reference contour task. No Superpowers
+skills are installed; follow specification/plan/tests/implementation/review.
+
+Next unblocked work: validate the already downloaded CPTAC RTSTRUCT's frame,
+series and per-contour image references; rasterize the explicitly selected ROI
+on the unchanged native CT grid with documented inclusion semantics. Test
+analytical polygon/holes/orientation and wrong-reference failures first. Generate
+and inspect actual reference overlays, never present them as model predictions.
+Add a concise research findings summary and native-grid measurements from actual
+model masks only when present. No guessed anatomy, clinical cutoff, attribution
+or PDAC diagnosis. Final model-output verification still waits for Colab.
+
+Milestone 7 real-reference checkpoint: installed only optional pydicom 3.0.1
+(2.4 MB wheel) into the existing venv, declared in requirements-reference-io.txt.
+Analytical RTSTRUCT tests first failed for missing code, then passed after
+implementation. Real source ROI 1 has 28 CLOSED_PLANAR contours across native
+k=176–202. Frame/study/series/SOP links and source DICOM/CT hashes checked;
+derived native mask contains 64,219 voxels, 78.392334 mL. Saved/verified all
+planes at `data/CPTAC-PDA-pilot/reference-20261115/reference.nii.gz`, SHA256
+`fbc376746d0a951be3adb429f39e624919b76fb5e2ccebc5fb53b2e517868308`.
+No slice interpolation/resampling/inference; clinical reference validation and
+diagnosis remain unestablished. New ignored manifest cases.cptac.reference.local.csv
+preserves the old no-reference manifest. Original CT-only export remains valid.
+Generated `outputs/cptac-reference-report-20261115/index.html`; visually checked
+all three real overlay PNGs, with source-reference semantics hash-bound in report.
+
+Genuine extended ZIP received: `Downloads/panorama-output (1).zip`, 10,157,431
+bytes, successful pretrained run started 2026-11-15T12:07:46.542370+00:00,
+runtime 222.998082 seconds, unchanged baseline/folds/source CT. New demo builder
+successfully checked and imported actual segmentation/probability products to
+`outputs/panorama-demo-with-products-20261115/imported`; report/ZIP generated.
+Original score 0.999536395072937 and candidate map unchanged. Actual model mask
+has 4,946 voxels (10.375289 mL), native bounds [244,276,35]–[273,304,47], extents
+[27.4805,26.5645,32.5] mm (box, not clinical diameter). Against MSD label 2:
+intersection 3,211; Dice 0.75847408, IoU 0.61092085. This single-case comparison
+has unresolved PDAC histology/training overlap; it is not independent accuracy.
+Derived mask hash `cdac733629b2e549ca8821a8929de4fb41da2931eafbf47fb0df7bc86eac8de5`;
+probability hash `50901a8ec2290c0bcb02f442b30a7d21fd7f136e7df25ad6b2ef5c54f03e6335`.
+Raw probability is genuine model output, not Grad-CAM/attention attribution.
+
+Added deterministic findings summary and actual binary-mask volume/centroid/box
+measurements, plus explicit annotation provenance in reporting. Visual inspection
+of actual model PNGs found near-zero raw probabilities darkening the entire crop;
+added/tested probability-weighted opacity (display only) with unchanged 0–1 values.
+Regenerate final report from the existing validated import after targeted checks.
+User was given the exact second-case input switch and cells 5/7/8/9 to reuse the
+successful T4 environment/weights; its new result is still pending. Finish code
+review/full checks, final real PNG inspection, documentation and commit/push.
+
 ## Milestone 6 software complete; fresh GPU products pending (2026-11-15)
 
 Latest connection checkpoint: user reports recurring Colab UI
