@@ -29,6 +29,15 @@ results remain checked. Its native browser/print/presentation rehearsal is still
 pending because prior Computer Use stopped on browser URL policy confidence.
 Source/docs commit and actual remote verification follow below when completed.
 
+Delivery receipt: related source/report/handoff work committed as
+0597f3a004dc2e0923c7b5c456e1b486cf8c833c. Normal push succeeded and an actual
+git ls-remote matched that exact branch head; working tree was clean. This
+receipt is a separate documentation update. Generated scans, ZIPs, deck, private
+build files and original statement remain excluded from Git. Final PPTX and its
+Downloads copy are byte-identical. Manual presenting-application rehearsal and
+lead-only clinical requirements are the remaining actions; no pending GPU job
+or additional download is required for tomorrow's saved demonstration.
+
 Exact next step: open the deck locally, rehearse speaker notes and slide 8's
 offline demonstration before the review. Open the polished report manually to
 check its presentation toggle, experiment selector and print preview on the
