@@ -1,5 +1,30 @@
 # Obtaining actual segmentation and raw probability products
 
+## Reconnecting during cell 6
+
+The browser displaying `Reconnecting` or `Disconnected` does not by itself
+establish that the remote weights process has stopped. Cell 6 captures output
+and displays it after the command exits, so a quiet cell is not proof of failure.
+Reconnect to the same runtime, keep the PC awake and check the existing cell's
+execution state. Do not start a second weights command or remove an active
+`.part` file. The partial is normal while an archive is being downloaded.
+
+If the existing cell is still running, let it finish. The archives contain
+613,484,406 and 1,143,995,491 bytes respectively; the process also verifies hashes
+and extracted checkpoints. A quiet period can include verification/extraction.
+Once it finishes successfully, continue at cell 7. If the command has exited
+with an error, inspect the printed message or `weights-setup.log`; only then
+consider removing the specifically named incomplete partial and retrying.
+
+For a recurring browser-connection problem, try a stable network and an updated
+supported browser. Google documents Colab's remote VM execution, changing runtime
+limits and the `googleusercontent.com` cookie exception in its
+[official FAQ](https://research.google.com/colaboratory/faq.html). Browser
+reconnection, a kernel crash and VM deletion are different events. If a VM is
+actually replaced, `/content` is temporary; saving a notebook alone does not save
+its downloaded models or generated output. Persistent archive/result storage is
+then necessary. No paid upgrade or larger GPU is justified by this symptom alone.
+
 The original phase-one statement requires model segmentation and a heatmap.
 The existing successful ZIP contains only the final candidate map and score.
 Its old contents cannot recover the missing intermediate products.

@@ -4,6 +4,25 @@ Updated: 2026-11-15 (Asia/Calcutta). This is the authoritative current handoff.
 
 ## Milestone 6 software complete; fresh GPU products pending (2026-11-15)
 
+Latest connection checkpoint: user reports recurring Colab UI
+`Reconnecting`/`Disconnected` during cell 6, without a RAM-crash/GPU-limit
+message. This does NOT establish VM termination or paused download. Instructed
+reconnection to the same session and preservation of the active cell/files.
+Do not rerun cell 6 concurrently or remove a .part while its download may still
+be running. The earlier partial-file removal applied to an already exited
+weights command. Notebook cell 6 is quiet during download because it prints its
+captured log after subprocess exit. Actual session/process/file progress remains
+unobserved here; no fresh GPU run or successful retry is claimed.
+Next: reconnect, check whether cell 6 remains busy and whether its download is
+progressing, then continue cells 7–9 only after weight setup succeeds. If the
+command exits, capture its full error before choosing recovery. If files are
+lost across VM replacement, persistent archive caching is a separate next fix.
+Updated cell-6 guidance and handoff documentation; all 8 notebook checks, its
+Ruff lint/format and Git whitespace passed. Executable code/pins are unchanged.
+Resume review found a clean checkout at `874cfff`, matching the actual remote;
+no local Python/notebook process was found or stopped. This guidance checkpoint
+will be committed/pushed and its actual remote head checked separately.
+
 Latest live Colab checkpoint: user's cell 6 failed before inference. Diagnostic
 rerun exposed `Incomplete download exists:
 Dataset103_PANORAMA_baseline_Pancreas_Segmentation.zip.part`.
