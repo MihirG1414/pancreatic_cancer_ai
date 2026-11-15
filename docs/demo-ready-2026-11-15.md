@@ -104,8 +104,8 @@ of the first CT are still **one unique model-tested CT**, not a two-case test se
 ## Remaining completion gates
 
 - Receive/import the second CT's actual outputs and inspect reference comparisons.
-- Rehearse actual browser slider/zoom/opacity and local ZIP extraction. Static PNG
-  and automated JS checks are separate from interactive browser acceptance.
+- Actual local Edge slider/zoom/opacity/reload acceptance passed (details below).
+  Rehearse the presentation and ZIP extraction on the eventual demo computer.
 - Establish an appropriate independent positive/negative patient cohort and
   diagnosis references; no case labels are inferred from empty tumor masks.
 - Complete lesion-level matching/FROC and visual error review; classification
@@ -118,3 +118,17 @@ of the first CT are still **one unique model-tested CT**, not a two-case test se
 
 No new network was trained. The local optional addition is the 2.4-MB pydicom
 3.0.1 parser (`requirements-reference-io.txt`), not a CUDA/model installation.
+
+## Verification completed
+
+216 Python tests and 7 Node viewer-control tests passed, along with Ruff lint/
+format, dependency, Markdown-link and whitespace checks. The new real reference
+overlays and all three genuine model-mask/probability PNGs were visually inspected.
+
+Actual native Edge acceptance passed for the local report: synchronized panels,
+first/last slice boundaries, largest-candidate focus (k=42), previous/next (k=43
+has 618 candidate voxels), shared candidate zoom, fill/outline/off, opacity and
+offline reload. Screenshots confirmed actual rendering. The separate report
+window remains open; the user's active Colab window/runtime was preserved.
+ZIP CRC/content checks passed; an extraction/presentation rehearsal on the
+eventual demo computer is still useful.

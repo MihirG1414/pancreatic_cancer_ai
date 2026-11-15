@@ -17,8 +17,15 @@ Final software checks: **216 Python tests passed**, **7 Node viewer tests passed
 full Ruff lint/format, pip check, Markdown links and Git whitespace passed.
 83 warnings are the existing SimpleITK/NumPy shape deprecation in expanded
 coverage. Torch/scipy remain absent locally. No GPU/weight/dataset download
-was repeated locally. Actual browser interactions remain pending tool/user
-acceptance, separate from PNG and automated JS checks.
+was repeated locally. Actual native Edge browser acceptance also passed after
+the implementation commit: loaded the local file in a separate window, inspected
+summary/rendered CT panels, exercised k=0/96 boundary behavior, largest-candidate
+focus at k=42 (640 voxels), next k=43 (618) and previous, shared zoom, outline/off/
+fill, opacity 20 vs 65, and offline reload returning to default full view at k=42.
+Screenshots confirmed synchronized CT/annotation/candidate rendering and effects.
+The browser access host was unavailable, so used native Edge via computer-use.
+Original Colab window/runtime was preserved; its second CT upload was observed
+in progress and not controlled. Report left open in the separate Edge window.
 
 Current guide: `docs/demo-ready-2026-11-15.md`; it supersedes the earlier same-day
 milestone-6 snapshot. Source code and reference masks are software/integrity
@@ -33,6 +40,13 @@ require actual model products and inspect alignment/measurements. Do not infer
 PDAC diagnosis/independence from its source ROI, fabricate missing attribution or
 call the overall project clinically complete. Commit/push and actual remote-head
 verification follow the completed checks below.
+
+Delivery verification: implementation commit
+`2f6a6d9fd70a6f1dc00c1d44ac8955771f93050b` was pushed and matched the actual
+remote branch head, with a clean tree before recording browser acceptance.
+This documentation closure captures the subsequent real UI check; push and
+verify its own final head separately at session end. No source/model/artifact
+changed during the browser check; no additional inference was performed here.
 
 User needs a demonstrable research pipeline today and authorizes continuing local
 work while Colab runs. VPN was identified by the user and disconnected. Latest
