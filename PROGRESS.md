@@ -70,9 +70,13 @@ two cases. The current two-case research demo is ready to present; overall
 clinical phase-one validation is not complete. No repeat Colab run is required
 to view either accepted report.
 
-Delivery: upload fix 48745e266a44b10df933b27b762d5e53d6ebdb38 was pushed and
-matched the actual remote branch head. This result/documentation checkpoint
-will be committed/pushed next, with its own remote head verified before handoff.
+Delivery verified: upload fix 48745e266a44b10df933b27b762d5e53d6ebdb38 and
+second-case checkpoint ecc84e9b58e0347cd3ad7890f83f8f752be28f0d were pushed
+normally. The second-case checkpoint matched the actual remote branch head.
+This receipt records that completed check; any later commit requires its own
+normal push/remote-head check at session handoff, not an assumption from this
+receipt. Current project next step remains the anatomy/attribution specification
+and independent-cohort work above, not another download or inference of these CTs.
 
 ## Second-case Colab upload collision fixed (2026-11-15)
 
