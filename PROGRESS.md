@@ -2,6 +2,39 @@
 
 Updated: 2026-11-15 (Asia/Calcutta). This is the authoritative current handoff.
 
+## Plain-language review PDF completed (2026-11-15)
+
+Final guide: outputs/pdf/PANORAMA_Project_Explained_16_Nov_2026.pdf.
+Identical convenience copy:
+C:/Users/Mihir1/Downloads/PANORAMA_Project_Explained_16_Nov_2026.pdf.
+Four A4 pages, 1,557 words: project/steps, report/results, technology and deferred
+clinical requirements, then explanations of all nine actual PPT slides. Includes
+brief term definitions, exact measured results and local report/PPT links.
+The model is pretrained; source annotations and genuine predictions remain
+distinct. No new diagnostic or clinical-performance claim is introduced.
+
+PDF is 84,830 bytes; SHA256
+f254fafd69b83e46890c76657045c80e92c7214ee40cb95fb33aa10fb55cbf91.
+All four final pages rendered using Poppler and individually visually inspected;
+no clipping/overlap found. Text extraction/page count and key result values
+checked; Downloads copy hash matches. The existing PowerPoint process/deck
+was preserved. No code/model/data change and no full test rerun needed for this
+documentation-only handoff. Failed draft layouts/build files remain ignored
+and are not the deliverable. No environment packages were installed.
+
+Exact next step: read this short guide, rehearse the nine-slide PPT using its
+speaker notes, and manually open the offline report on the presenting computer.
+Clinical gates and pending polished-layout native browser rehearsal are unchanged.
+
+Latest user requests a short PDF explaining the completed work/steps, report,
+technology and each of the nine PPT slides. Resume clean local head c0889a6;
+PowerPoint is open on the user's deck and must be preserved. No local Python
+job active. Read PDF skill. Plan four readable pages using checked reports,
+review handoff and actual PPT slide order, followed by text/numeric checks and
+rendered page inspection. Use bundled PDF tools; no environment reinstall or
+new model/data work. Keep generated PDF/build files under ignored outputs and
+provide an identical Downloads copy. Clinical validation remains deferred.
+
 ## Review PowerPoint completed (2026-11-15)
 
 Final editable deck: outputs/review-ppt-20261116/final/
