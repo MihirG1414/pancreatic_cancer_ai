@@ -38,7 +38,7 @@ def test_colab_notebook_is_cleared_valid_and_compilable():
     assert "git+https" not in joined  # installation reads the tracked source-pinned lock
     assert "requirements-panorama-gpu-lock.txt" in joined
     assert "GIT_LFS_SKIP_SMUDGE" in joined
-    assert "files.upload()" in joined and "files.download(" in joined
+    assert "files.upload(" in joined and "files.download(" in joined
     assert "panorama_runtime" in joined
     assert '"preflight"' in joined and '"weights"' in joined and '"run"' in joined
 
@@ -140,3 +140,94 @@ def test_weights_cell_preserves_diagnostic_before_manifest_read(
     assert (
         "weights ready" if success else "GPU pilot failed: fixture failure"
     ) in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("invalid", [None, "missing", "annotation", "outside_stage"])
+def test_two_case_uploads_do_not_collide_with_colab_saved_files(tmp_path, monkeypatch, invalid):
+    """Emulate the public SDK returning uniquified saved paths, not browser names."""
+    import hashlib
+
+    upload_cell = compile(code_cells()[4], "upload-cell", "exec")
+    monkeypatch.chdir(tmp_path)
+    root = tmp_path / "mirai"
+    root.mkdir()
+    payloads = {
+        "ct.mha": b"synthetic CT payload; not a medical image",
+        "input-provenance.json": json.dumps(
+            {
+                "annotation_used": False,
+                "mha_sha256": hashlib.sha256(
+                    b"synthetic CT payload; not a medical image"
+                ).hexdigest(),
+                "geometry": {"fixture": "synthetic"},
+                "suitability": {"contrast_phase": "unknown", "hu_calibration": "unknown"},
+            }
+        ).encode(),
+        "clinical-information-pancreatic-ct.json": b'{"age": null}',
+    }
+    originals = {name: b"preserved first-case file" for name in payloads}
+    for name, data in originals.items():
+        (tmp_path / name).write_bytes(data)
+    stages, checked_inputs = [], []
+
+    def fake_upload(target_dir=""):
+        stage = Path(target_dir or ".").resolve()
+        stages.append(stage)
+        selected = dict(payloads)
+        if invalid == "missing":
+            del selected["ct.mha"]
+        if invalid == "annotation":
+            selected["label.nii.gz"] = b"forbidden annotation fixture"
+        result = {}
+        for name, data in selected.items():
+            path = stage / name
+            if path.exists():
+                path = path.with_name(path.stem + " (1)" + path.suffix)
+            path.write_bytes(data)
+            result[str(path)] = data
+        if invalid == "outside_stage":
+            key = next(key for key in result if Path(key).suffix == ".mha")
+            result[str(tmp_path / "ct.mha")] = result.pop(key)
+        return result
+
+    google = ModuleType("google")
+    colab = ModuleType("google.colab")
+    colab.files = SimpleNamespace(upload=fake_upload)
+    google.colab = colab
+    monkeypatch.setitem(sys.modules, "google", google)
+    monkeypatch.setitem(sys.modules, "google.colab", colab)
+
+    def fake_run(command, **kwargs):
+        checked_inputs.append(Path(command[-1]))
+        assert kwargs["check"] is True
+        return SimpleNamespace(returncode=0)
+
+    for number in (1, 2):
+        target = root / f"input-{number}"
+        namespace = {
+            "ROOT": root,
+            "INPUT": target,
+            "Path": Path,
+            "json": json,
+            "PYTHON": Path(sys.executable),
+            "ENV": {},
+            "SOFTWARE_SMOKE_TEST": True,
+            "subprocess": SimpleNamespace(run=fake_run),
+        }
+        if invalid:
+            with pytest.raises(RuntimeError, match="Upload|upload"):
+                exec(upload_cell, namespace)
+            assert not target.exists()
+        else:
+            exec(upload_cell, namespace)
+            assert {p.name: p.read_bytes() for p in target.iterdir()} == payloads
+            assert not {"uploaded", "received", "value"} & namespace.keys()
+            before = len(stages)
+            exec(upload_cell, namespace)
+            assert len(stages) == before  # Verified input reuse never triggers another upload.
+    assert len(set(stages)) == 2
+    assert all(stage.is_relative_to(root) and not stage.exists() for stage in stages)
+    assert all((tmp_path / name).read_bytes() == data for name, data in originals.items())
+    assert checked_inputs == (
+        [] if invalid else [root / "input-1", root / "input-1", root / "input-2", root / "input-2"]
+    )

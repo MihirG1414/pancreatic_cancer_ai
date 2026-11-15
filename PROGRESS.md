@@ -2,6 +2,45 @@
 
 Updated: 2026-11-15 (Asia/Calcutta). This is the authoritative current handoff.
 
+## Second-case Colab upload collision fixed (2026-11-15)
+
+Second-case cell 5 finished uploading the correct three inputs but rejected
+Colab's returned saved names: `ct (1).mha`, `input-provenance (1).json` and
+`clinical-information-pancreatic-ct (1).json`. Read-only native Colab inspection
+confirmed the names; official SDK source confirms its unique-name behavior.
+This was a notebook upload collision, not incorrect user selection or inference
+failure. No second-case genuine model output has been received yet.
+
+Fixed notebook cell 5 to use a fresh temporary upload directory, validate exact
+basenames/path containment/size before creating INPUT, and free upload buffers.
+Existing exact input list, provenance/hash/native-grid checks and source pins
+remain in force. Previous inputs/outputs/weights and the active Colab runtime
+were preserved. No environment reinstall or model/data redownload was needed.
+
+Checks: **12 notebook tests passed**, including two consecutive uploads with
+identical canonical filenames, existing-input reuse and rejection of missing,
+extra annotation or outside-stage paths. Ruff lint/format, notebook compilation/
+cleared-output checks, handoff Python syntax/local links and Git whitespace
+passed. These use synthetic fixtures/mocked upload and input-check subprocesses;
+they do not establish a genuine second-case GPU result or clinical performance.
+The full suite was not repeated for this notebook-only change; milestone 7's
+216 Python / 7 Node results remain the latest full-project checks.
+
+Recovery for the already-completed browser upload is documented in
+`docs/model-output-handoff.md`: use existing `uploaded` bytes only after exact
+observed-name, cptac_pilot_01, annotation_used=false and MHA checksum checks;
+refuse overwriting INPUT. User was given this cell, then instructed to rerun
+cell 5 (full input checks/reuse), followed by 7, 8 and 9. Do not restart/re-upload
+or rerun setup/weights to address this error. Recovery execution in Colab is
+pending user confirmation; the permanent fix has been verified locally only.
+
+Exact next action: user runs recovery then cells 5/7/8/9 and provides the new
+second-case ZIP. Validate its source CT hash/case/native model products, then
+build with `cases.cptac.reference.local.csv`, ready CT export and source reference
+provenance as recorded below. Inspect genuine overlays/measurements. Do not
+claim training independence or clinical validation. Commit/push verification
+of this upload fix is recorded after the checks, before session handoff.
+
 ## Milestone 7 complete locally: genuine mask/heatmap demo and source reference (2026-11-15)
 
 Current result: `outputs/panorama-demo-final-20261115/index.html` and shareable

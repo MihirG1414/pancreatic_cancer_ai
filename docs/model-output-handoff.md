@@ -1,5 +1,58 @@
 # Obtaining actual segmentation and raw probability products
 
+## Cell 5: second upload saved with `(1)` filenames
+
+On 15 November, native Colab inspection confirmed that the correct second-case
+inputs were fully uploaded but saved as `ct (1).mha`, `input-provenance (1).json`
+and `clinical-information-pancreatic-ct (1).json`. The original notebook compared
+returned keys with the browser filenames; this fails because Colab's SDK returns
+the unique **saved** paths, as implemented in
+[the official upload helper](https://github.com/googlecolab/colabtools/blob/main/google/colab/files.py).
+
+The notebook now uses a fresh temporary upload directory, checks canonical
+basenames/returned path containment/size, and only then creates the new INPUT.
+It frees uploaded buffers and preserves the existing source hash and native-grid
+checks. No inference/weight/source-pin changes are needed. Do not reload an
+active notebook or re-upload the large CT to apply a source-only notebook fix.
+
+For the specific already-completed second-case upload above, the failed cell
+still holds `uploaded`. Recover those bytes in a new cell, using the current
+`INPUT = ROOT / "input-cptac-pilot-01"` (which the failed cell did not create):
+
+```python
+import hashlib
+import json
+
+names = {
+    "ct.mha": "ct (1).mha",
+    "input-provenance.json": "input-provenance (1).json",
+    "clinical-information-pancreatic-ct.json":
+        "clinical-information-pancreatic-ct (1).json",
+}
+if set(uploaded) != set(names.values()):
+    raise RuntimeError(f"Unexpected uploaded filenames: {list(uploaded)}")
+info = json.loads(uploaded[names["input-provenance.json"]])
+if (
+    info.get("case_id") != "cptac_pilot_01"
+    or info.get("annotation_used") is not False
+    or hashlib.sha256(uploaded[names["ct.mha"]]).hexdigest()
+       != info.get("mha_sha256")
+):
+    raise RuntimeError("Uploaded CT/provenance checks failed.")
+INPUT.mkdir(exist_ok=False)
+for expected, saved in names.items():
+    (INPUT / expected).write_bytes(uploaded[saved])
+del uploaded
+print("Recovered input:", INPUT)
+```
+
+Rerun cell 5 for full existing input checks; it reuses the new folder. Then run
+7, 8 and 9. Keep previous case folders, completed weights and run outputs.
+This recovery code intentionally refuses unexpected names, wrong case/mismatched
+bytes or overwriting an existing INPUT. If the dictionary was lost through a
+kernel reset, it cannot recover memory that no longer exists; inspect the saved
+files before choosing a new upload. Do not silently take old first-case files.
+
 ## Reconnecting during cell 6
 
 The browser displaying `Reconnecting` or `Disconnected` does not by itself
