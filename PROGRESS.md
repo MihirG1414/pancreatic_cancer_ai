@@ -4,6 +4,26 @@ Updated: 2026-11-15 (Asia/Calcutta). This is the authoritative current handoff.
 
 ## Milestone 6 software complete; fresh GPU products pending (2026-11-15)
 
+Latest live Colab checkpoint: user's cell 6 failed before inference. Diagnostic
+rerun exposed `Incomplete download exists:
+Dataset103_PANORAMA_baseline_Pancreas_Segmentation.zip.part`.
+Instructed removal of ONLY that generated partial file under ROOT/archives, then
+retry cell 6; completed archives/weights and the runtime are preserved. Actual
+retry result is pending. Do not interpret this as a model-inference failure or
+change baseline/checksum/resource guards. Notebook cell 6 now retains/displays
+`weights-setup.log` before raising a descriptive error, reading weight provenance
+only after success. New success/failure behavioral regressions initially failed;
+after correction all **8 notebook tests passed**. Full Ruff lint/format including
+the cleared notebook and whitespace passed. This follows the earlier full
+192-test suite; two newly added notebook regressions were tested separately.
+Actual GPU retry success remains unverified.
+
+Delivery verification: milestone 6 implementation commit
+`a550d17ccafa08d18a3107342d46a30fb7448eb3` was pushed and matched the actual
+remote branch head with a clean tree before the live Colab troubleshooting edit.
+This subsequent notebook/logging checkpoint records the known failure and tested
+visibility fix; commit/push and verify its own head separately at session end.
+
 Current result: genuine one-case interactive demo with explicit quantitative
 reference comparison; one additional public CT downloaded, verified, converted
 and prepared for Colab. No new network trained and no second-case inference yet.

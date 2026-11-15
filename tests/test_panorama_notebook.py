@@ -109,3 +109,34 @@ def test_notebook_run_requests_model_outputs_when_selected(tmp_path, export):
     }
     exec(compile(code_cells()[6], "run-cell", "exec"), namespace)
     assert ("--include-model-outputs" in commands[0]) is export
+
+
+@pytest.mark.parametrize("success", [False, True])
+def test_weights_cell_preserves_diagnostic_before_manifest_read(
+    tmp_path, monkeypatch, capsys, success
+):
+    def fake_run(command, **kwargs):
+        assert command[3] == "weights"
+        assert kwargs.get("check") is not True
+        kwargs["stdout"].write("weights ready" if success else "GPU pilot failed: fixture failure")
+        return SimpleNamespace(returncode=0 if success else 1)
+
+    if success:
+        (tmp_path / "weight-provenance.json").write_text('{"fixture": "synthetic"}')
+    namespace = {
+        "ROOT": tmp_path,
+        "PYTHON": Path(sys.executable),
+        "ENV": {},
+        "json": json,
+        "subprocess": SimpleNamespace(run=fake_run, STDOUT=-2),
+    }
+    if success:
+        exec(compile(code_cells()[5], "weights-cell", "exec"), namespace)
+    else:
+        with pytest.raises(RuntimeError, match="Weight preparation failed"):
+            exec(compile(code_cells()[5], "weights-cell", "exec"), namespace)
+    log = tmp_path / "weights-setup.log"
+    assert log.is_file()
+    assert (
+        "weights ready" if success else "GPU pilot failed: fixture failure"
+    ) in capsys.readouterr().out
