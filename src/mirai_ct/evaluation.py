@@ -18,7 +18,7 @@ from mirai_ct.cases import Case, read_cases
 from mirai_ct.panorama import load_predictions
 from mirai_ct.panorama_io import sha256_file
 from mirai_ct.panorama_outputs import load_model_outputs
-from mirai_ct.volume import Volume, check_geometry, load_volume, read_slice
+from mirai_ct.volume import Volume, check_geometry, iter_slices, load_volume
 
 
 def overlap_metrics(
@@ -29,8 +29,7 @@ def overlap_metrics(
         raise ValueError("reference_label must be a positive integer <= 65535.")
     check_geometry(reference, prediction)
     reference_count = predicted_count = intersection = 0
-    for k in range(reference.shape[2]):
-        ref, pred = read_slice(reference, 2, k), read_slice(prediction, 2, k)
+    for ref, pred in zip(iter_slices(reference), iter_slices(prediction), strict=True):
         if (
             not np.isfinite(ref).all()
             or (ref < 0).any()

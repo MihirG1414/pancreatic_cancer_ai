@@ -2,6 +2,67 @@
 
 Updated: 2026-11-15 (Asia/Calcutta). This is the authoritative current handoff.
 
+## Milestone 9 in progress: remaining phase-one software (2026-11-15)
+
+User explicitly requested completing the remaining project. Resume review found
+clean local/actual remote HEAD 975655e3e27d5ccc061ca6af05929aaea2254d06,
+no running local Python inference/kernel, and both accepted demos intact.
+Read the private original statement again; never commit it. Superpowers skills
+are not installed under the available skill/plugin roots; use the same explicit
+specification/risk/plan/test/implementation/review workflow directly.
+
+Official pinned PANORAMA source and label legend were inspected: low-resolution
+pancreas binary plus stage-2 labels 0..6 (lesion, veins, arteries, parenchyma,
+pancreatic duct, bile duct). No head/body/tail or attention output is supplied.
+Do not rename coordinate thirds as anatomical predictions. Preserve the two
+accepted reports/source inputs. No new model/ensemble/CUDA install locally.
+
+Plan/spec: docs/superpowers/specs/2026-11-15-anatomy-attribution-design.md.
+Implement explicit reviewed subregion-mask integration, actual full-five-fold
+stage-2 occlusion-sensitivity export/recovery on Colab, local checked explanation
+import/reporting, and lesion matching/FROC evaluation with synthetic regression
+checks and exploratory real two-case error review. Keep probabilities separate
+from explanations and annotation references separate from predictions. Actual
+explanation needs genuine additional GPU forward passes, not existing ZIP data.
+Asked whether current Colab is connected and whether lead can arrange reviewed
+labels/independent positive-negative cases; continue independent software work.
+Clinical validity/independence cannot be manufactured by code or synthetic CT.
+
+Checkpoint: specification plus synthetic-first tests implemented. Native anatomy
+mask/provenance checks, resumable signed occlusion arithmetic and GPU adapter,
+local explanation/source verification and report/demo integration, and explicit
+one-to-one lesion matching/FROC are implemented. Initial full suite: 235 passed;
+7 Node checks, Ruff/format and pip check passed. A further fake-network GPU API
+wiring test then passed, checking all five folds/default TTA/native axis order;
+this is not real GPU execution. Latest full suite after that addition: **236 tests passed**, Ruff/format passed.
+Final target/probability reproduction guards are undergoing targeted checks.
+No torch/scipy/CUDA installed locally. Real two-case lesion matching ran in about
+5 seconds: one reference component and one overlapping candidate per case under
+explicit IoU>=0.1. Unknown PDAC labels/training overlap prohibit accuracy claims.
+
+RAM temporarily fell below 512 MiB; did not close user processes. Added a checked
+sequential native-k reader to eliminate repeated gzip decompression and a bounded
+sparse/cropped component analysis. Both preserve original geometry and values;
+scaled/reflected NIfTI regression checks pass. No full-volume cache is introduced.
+Both accepted demos remain untouched. Real lesion report awaits browser review.
+
+Read-only Colab UI confirms current T4 still connected (1.75/12.67 GB RAM in use),
+completed cptac run-20261115-124314 and CT export input-cptac-pilot-01. No cells
+changed during that check. Existing runtime/weights can support a genuine
+explanation continuation after checked code is committed/source-pinned. Asked
+lead-review/independent-cohort question remains unanswered; continue software.
+Additional anatomy-model metadata was researched only (PanTS region model,
+public single checkpoint, MIT card, newer torch version and overlapping region
+labels). No auxiliary weights downloaded or assumed compatible, no new model
+substituted for PANORAMA or anatomy prediction fabricated.
+
+Exact next action: finish current checks/review, commit/push verified source,
+prepare a pinned continuation in the existing Colab (one baseline plus eight
+occlusions, no reinstallation/re-upload), observe genuine completion and import
+its explanation. Build the final offline two-case entry point and verification
+matrix. Expert anatomical labels and audited positive/negative cohort remain
+external requirements, not tasks satisfied by arithmetic or synthetic tests.
+
 ## Milestone 8 complete: genuine second CT demo (2026-11-15)
 
 Received and validated `C:/Users/Mihir1/Downloads/panorama-output (2).zip`

@@ -5,7 +5,7 @@ from typing import Any
 import numpy as np
 
 from mirai_ct.panorama_io import geometry, require_memory, simpleitk
-from mirai_ct.volume import Volume, read_slice
+from mirai_ct.volume import Volume, iter_slices
 
 
 def segmentation_measurements(segmentation: Volume) -> dict[str, Any]:
@@ -15,8 +15,7 @@ def segmentation_measurements(segmentation: Volume) -> dict[str, Any]:
     sums = np.zeros(3, dtype=np.float64)
     minimum = np.asarray(segmentation.shape, dtype=np.int64)
     maximum = np.full(3, -1, dtype=np.int64)
-    for k in range(segmentation.shape[2]):
-        plane = read_slice(segmentation, 2, k)
+    for k, plane in enumerate(iter_slices(segmentation)):
         if not np.isfinite(plane).all() or not ((plane == 0) | (plane == 1)).all():
             raise ValueError("Model measurements require a finite binary segmentation.")
         i, j = np.nonzero(plane)
@@ -44,7 +43,12 @@ def segmentation_measurements(segmentation: Volume) -> dict[str, Any]:
 
 
 def findings_summary(
-    prediction_info: dict | None, regions: list[dict] | None, model_measurements: dict | None
+    prediction_info: dict | None,
+    regions: list[dict] | None,
+    model_measurements: dict | None,
+    *,
+    anatomy: dict | None = None,
+    explanation: dict | None = None,
 ) -> dict[str, Any]:
     """Deterministic research wording grounded only in available imported products."""
     sentences = []
@@ -66,13 +70,25 @@ def findings_summary(
                 f"({model_measurements['voxel_count']:,} voxels); unvalidated model measurement."
             )
     sentences.append("No validated screening cutoff or clinical diagnosis is established.")
-    sentences.append("Head/body/tail and decision attribution remain unavailable.")
+    if anatomy is None and explanation is None:
+        sentences.append("Head/body/tail and decision attribution remain unavailable.")
+    else:
+        sentences.append(
+            "External subregion-mask overlap: " + anatomy["assignment"] + "."
+            if anatomy
+            else "Head/body/tail remains unassigned."
+        )
+        sentences.append(
+            "Signed input-occlusion sensitivity is available for a fixed stage-2 lesion target."
+            if explanation
+            else "Decision attribution remains unavailable."
+        )
     return {
         "sentences": sentences,
         "candidate_region_count": len(regions) if regions is not None else None,
         "model_segmentation_measured": model_measurements is not None,
         "clinical_diagnosis": "not established",
-        "anatomical_subregion": "unassigned",
+        "anatomical_subregion": anatomy["assignment"] if anatomy else "unassigned",
     }
 
 
@@ -81,8 +97,7 @@ def candidate_regions(prediction: Volume) -> list[dict[str, Any]]:
     require_memory(prediction.shape)
     grid = geometry(prediction)
     support = np.empty(prediction.shape[::-1], dtype=np.uint8)
-    for k in range(prediction.shape[2]):
-        plane = read_slice(prediction, 2, k)
+    for k, plane in enumerate(iter_slices(prediction)):
         if plane.min() < 0 or plane.max() > 1:
             raise ValueError("Candidate values must be in [0,1].")
         support[k] = (plane > 0).T
@@ -101,8 +116,8 @@ def candidate_regions(prediction: Volume) -> list[dict[str, Any]]:
     stats.Execute(labeled)
     ids = sitk.GetArrayViewFromImage(labeled)
     peaks = {int(label): 0.0 for label in stats.GetLabels()}
-    for k in range(prediction.shape[2]):
-        values = read_slice(prediction, 2, k).T
+    for k, plane in enumerate(iter_slices(prediction)):
+        values = plane.T
         for label in np.unique(ids[k][ids[k] > 0]):
             peaks[int(label)] = max(peaks[int(label)], float(values[ids[k] == label].max()))
     findings = []

@@ -13,7 +13,7 @@ from typing import Any
 import numpy as np
 
 from mirai_ct.panorama_io import available_bytes
-from mirai_ct.volume import Volume, check_geometry, metadata, read_slice
+from mirai_ct.volume import Volume, check_geometry, iter_slices, metadata
 
 
 def candidate_summary(prediction: Volume) -> dict[str, Any]:
@@ -22,8 +22,7 @@ def candidate_summary(prediction: Volume) -> dict[str, Any]:
     total, largest = 0, 0
     focus = [size // 2 for size in prediction.shape]
     lower, upper = np.array(prediction.shape), np.full(3, -1)
-    for k in range(prediction.shape[2]):
-        plane = read_slice(prediction, 2, k)
+    for k, plane in enumerate(iter_slices(prediction)):
         if not np.isfinite(plane).all() or plane.min() < 0 or plane.max() > 1:
             raise ValueError("Candidate values must be finite and in [0,1].")
         support = plane > 0
@@ -99,10 +98,13 @@ def export_viewer(
     assets = output / "slices"
     assets.mkdir()
     label_ids: set[int] = set()
-    for k in range(scan.shape[2]):
+    mask_planes = iter_slices(mask) if mask is not None else iter([None] * scan.shape[2])
+    for k, (ct_plane, values_plane, mask_plane) in enumerate(
+        zip(iter_slices(scan), iter_slices(prediction), mask_planes, strict=True)
+    ):
         # PNG y increases downwards; flip native j so it increases upwards.
-        ct = read_slice(scan, 2, k).T[::-1]
-        values = read_slice(prediction, 2, k).T[::-1]
+        ct = ct_plane.T[::-1]
+        values = values_plane.T[::-1]
         gray = np.clip((ct.astype(np.float32) + 150) / 400 * 255, 0, 255).astype(np.uint8)
         support = values > 0
         rgba = colormaps["magma"](values, bytes=True)
@@ -120,7 +122,7 @@ def export_viewer(
         imsave(output / entry["candidate"], rgba)
         imsave(output / entry["outline"], edge)
         if mask is not None:
-            labels = read_slice(mask, 2, k).T[::-1]
+            labels = mask_plane.T[::-1]
             if (
                 not np.isfinite(labels).all()
                 or (labels < 0).any()

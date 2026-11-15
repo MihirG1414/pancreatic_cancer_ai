@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 
 from mirai_ct.cases import Case, read_cases
-from mirai_ct.volume import Volume, check_geometry, load_volume, metadata, read_slice
+from mirai_ct.volume import Volume, check_geometry, iter_slices, load_volume, metadata
 
 MSD_LABELS = {0: "Background", 1: "Pancreas", 2: "Cancer"}
 
@@ -22,8 +22,7 @@ def annotation_measurements(scan: Volume, mask: Volume) -> list[dict]:
     check_geometry(scan, mask)
     counts: dict[int, int] = {}
     bounds: dict[int, tuple[list[int], list[int]]] = {}
-    for k in range(mask.shape[2]):
-        plane = read_slice(mask, 2, k)
+    for k, plane in enumerate(iter_slices(mask)):
         if (plane < 0).any() or (plane > 65535).any() or not np.equal(plane, np.floor(plane)).all():
             raise ValueError("Existing mask must contain nonnegative integer label IDs <= 65535.")
         ids, frequencies = np.unique(plane, return_counts=True)
@@ -83,6 +82,7 @@ def _report_html(
     summary: dict | None = None,
     model_measurements: dict | None = None,
     annotation_info: dict | None = None,
+    additional_section: str = "",
 ) -> str:
     info = metadata(scan)
     source = html.escape(case.dataset_source)
@@ -209,6 +209,7 @@ qform code: {info["qform_code"]}; sform code: {info["sform_code"]}; obliquity: {
 {region_section}
 {evaluation_section}
 {model_section if prediction_info is not None else ""}
+{additional_section}
 </body></html>"""
 
 
@@ -222,10 +223,15 @@ def generate_report(
     reference_label: int | None = None,
     reference_description: str = "",
     annotation_provenance: Path | None = None,
+    anatomy_mask: Path | None = None,
+    anatomy_provenance: Path | None = None,
+    explanation: Path | None = None,
 ) -> Path:
     """Write HTML/native views, plus separate imported-prediction views if supplied."""
     if output.exists():
         raise ValueError("Output directory already exists; choose a new name to preserve it.")
+    if (anatomy_mask is None) != (anatomy_provenance is None):
+        raise ValueError("Supply both anatomy mask and its explicit provenance.")
     if (interactive or measure_candidates) and predictions is None:
         raise ValueError(
             "Interactive viewer/candidate measurements requires a validated --predictions import."
@@ -271,7 +277,32 @@ def generate_report(
     model_measurements = (
         segmentation_measurements(model_outputs["segmentation"]) if model_outputs else None
     )
-    summary = findings_summary(prediction_info, regions, model_measurements)
+    anatomy_info, explanation_info = None, None
+    if anatomy_mask is not None or explanation is not None:
+        if not model_outputs:
+            raise ValueError("Anatomy/explanation requires genuine imported model products.")
+        if anatomy_mask is not None:
+            from mirai_ct.anatomy import load_anatomy
+
+            anatomy_info = load_anatomy(
+                case.scan_path, model_outputs["segmentation"], anatomy_mask, anatomy_provenance
+            )
+        if explanation is not None:
+            from mirai_ct.explanations import load_explanation
+
+            explanation_info = load_explanation(
+                explanation,
+                prediction_info,
+                model_outputs["segmentation"],
+                model_outputs["probability"],
+            )
+    summary = findings_summary(
+        prediction_info,
+        regions,
+        model_measurements,
+        anatomy=anatomy_info,
+        explanation=explanation_info,
+    )
     rows = annotation_measurements(scan, mask) if mask is not None else []
     positives = [row for row in rows if row["label_id"] > 0]
     focus = next((row for row in positives if row["label_id"] == 2), None)
@@ -332,6 +363,18 @@ def generate_report(
                 plt.close(figure)
     from mirai_ct.panorama_io import write_json
 
+    additional_section = ""
+    if anatomy_info is not None or explanation_info is not None:
+        from mirai_ct.explanations import evidence_html, plot_explanation
+
+        additional_section = evidence_html(anatomy_info, explanation_info)
+        if explanation_info is not None:
+            for axis in range(3):
+                figure = plot_explanation(scan, explanation_info, axis, prediction_indices[axis])
+                try:
+                    figure.savefig(output / f"explanation-axis-{axis}.png", dpi=120)
+                finally:
+                    plt.close(figure)
     write_json(
         output / "report.json",
         {
@@ -343,8 +386,10 @@ def generate_report(
             "candidate_regions": regions,
             "model_segmentation_available": bool(model_outputs),
             "raw_probability_available": bool(model_outputs),
-            "attribution_available": False,
-            "anatomical_subregion": "unassigned",
+            "attribution_available": explanation_info is not None,
+            "explanation": explanation_info,
+            "anatomical_subregion": anatomy_info["assignment"] if anatomy_info else "unassigned",
+            "anatomy_result": anatomy_info,
             "clinical_validation": "not established",
             "reference_comparison": evaluation,
             "findings_summary": summary,
@@ -369,6 +414,7 @@ def generate_report(
             summary,
             model_measurements,
             annotation_info,
+            additional_section,
         ),
         encoding="utf-8",
     )
@@ -398,6 +444,11 @@ def main() -> int:
     parser.add_argument(
         "--annotation-provenance", type=Path, help="Source reference.json to validate"
     )
+    parser.add_argument("--anatomy-mask", type=Path)
+    parser.add_argument("--anatomy-provenance", type=Path)
+    parser.add_argument(
+        "--explanation", type=Path, help="Genuine signed occlusion explanation.json"
+    )
     args = parser.parse_args()
     try:
         matches = [case for case in read_cases(args.manifest) if case.case_id == args.case_id]
@@ -412,6 +463,9 @@ def main() -> int:
             reference_label=args.reference_label,
             reference_description=args.reference_description,
             annotation_provenance=args.annotation_provenance,
+            anatomy_mask=args.anatomy_mask,
+            anatomy_provenance=args.anatomy_provenance,
+            explanation=args.explanation,
         )
         print(
             json.dumps(

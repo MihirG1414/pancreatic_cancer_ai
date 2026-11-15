@@ -66,6 +66,9 @@ def build_demo(
     reference_description: str = "",
     require_model_products: bool = False,
     annotation_provenance: Path | None = None,
+    anatomy_mask: Path | None = None,
+    anatomy_provenance: Path | None = None,
+    explanation: Path | None = None,
 ) -> Path:
     """Validate/import, render synchronized viewer, compare explicit labels and ZIP."""
     if output.exists():
@@ -96,6 +99,9 @@ def build_demo(
             reference_label=reference_label,
             reference_description=reference_description,
             annotation_provenance=annotation_provenance,
+            anatomy_mask=anatomy_mask,
+            anatomy_provenance=anatomy_provenance,
+            explanation=explanation,
         )
         report_info = json.loads((report.parent / "report.json").read_text(encoding="utf-8"))
         archive = Path(shutil.make_archive(str(output / "demo-report"), "zip", report.parent))
@@ -112,7 +118,8 @@ def build_demo(
                 "report_zip_sha256": sha256_file(archive),
                 "model_segmentation_available": report_info["model_segmentation_available"],
                 "raw_probability_available": report_info["raw_probability_available"],
-                "attribution_available": False,
+                "attribution_available": report_info["attribution_available"],
+                "anatomical_subregion": report_info["anatomical_subregion"],
                 "clinical_validation": "not established",
             },
         )
@@ -133,6 +140,9 @@ def main() -> int:
     parser.add_argument("--reference-description", default="")
     parser.add_argument("--require-model-products", action="store_true")
     parser.add_argument("--annotation-provenance", type=Path)
+    parser.add_argument("--anatomy-mask", type=Path)
+    parser.add_argument("--anatomy-provenance", type=Path)
+    parser.add_argument("--explanation", type=Path)
     args = parser.parse_args()
     try:
         matches = [case for case in read_cases(args.manifest) if case.case_id == args.case_id]
@@ -148,6 +158,9 @@ def main() -> int:
                 reference_description=args.reference_description,
                 require_model_products=args.require_model_products,
                 annotation_provenance=args.annotation_provenance,
+                anatomy_mask=args.anatomy_mask,
+                anatomy_provenance=args.anatomy_provenance,
+                explanation=args.explanation,
             )
         )
     except (OSError, ValueError, RuntimeError, MemoryError, zipfile.BadZipFile) as exc:

@@ -15,7 +15,7 @@ from mirai_ct.panorama_io import (
     simpleitk,
     sitk_affine_lps,
 )
-from mirai_ct.volume import Volume, check_geometry, load_volume, read_slice
+from mirai_ct.volume import Volume, check_geometry, iter_slices, load_volume
 
 MODEL_FILES = {
     "segmentation": "images/pdac-segmentation/segmentation.mha",
@@ -120,8 +120,8 @@ def import_model_outputs(scan: Volume, grid: dict, bundle: Path, output: Path, r
         nib.save(restored, path)
         native = load_volume(path)
         check_geometry(scan, native)
-        for k in range(scan.shape[2]):
-            if not np.array_equal(read_slice(native, 2, k), values[k].T):
+        for k, plane in enumerate(iter_slices(native)):
+            if not np.array_equal(plane, values[k].T):
                 raise ValueError("Native model-output voxels changed during import.")
         hashes[path.name] = sha256_file(path)
     return hashes

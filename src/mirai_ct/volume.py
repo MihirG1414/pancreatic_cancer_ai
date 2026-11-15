@@ -3,6 +3,7 @@
 import math
 import warnings
 import zlib
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -196,3 +197,35 @@ def read_slice(image: Volume, axis: int, index: int) -> NDArray[np.float32]:
     if not np.isfinite(plane).all():
         raise ValueError("Slice contains non-finite intensity values.")
     return plane
+
+
+def iter_slices(image: Volume) -> Iterator[NDArray[np.float32]]:
+    """Stream native k planes through one handle; never repeatedly inflate gzip."""
+    if not nib.is_proxy(image.dataobj) or image.dataobj.order != "F":
+        for k in range(image.shape[2]):
+            yield read_slice(image, 2, k)
+        return
+    proxy = image.dataobj
+    pixels = image.shape[0] * image.shape[1]
+    slab_bytes = pixels * proxy.dtype.itemsize
+    available = psutil.virtual_memory().available
+    if pixels * 32 + slab_bytes * 2 > min(64 * MIB, available // 4):
+        raise MemoryError("Insufficient memory budget for sequential native slices.")
+    try:
+        with nib.openers.ImageOpener(proxy.file_like, mode="rb") as source:
+            source.seek(proxy.offset)
+            for _ in range(image.shape[2]):
+                raw = source.read(slab_bytes)
+                if len(raw) != slab_bytes:
+                    raise ValueError("Incomplete voxel payload")
+                values = np.ndarray(image.shape[:2], dtype=proxy.dtype, buffer=raw, order="F")
+                plane = np.array(
+                    nib.volumeutils.apply_read_scaling(values, proxy.slope, proxy.inter),
+                    dtype=np.float32,
+                    copy=True,
+                )
+                if not np.isfinite(plane).all():
+                    raise ValueError("Slice contains non-finite intensity values.")
+                yield plane
+    except (OSError, ValueError, EOFError, zlib.error) as exc:
+        raise ValueError(f"Cannot stream slices; file may be truncated or corrupt: {exc}") from exc
