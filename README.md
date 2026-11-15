@@ -4,6 +4,17 @@
 records completed work, checks, unresolved issues and the exact next step.
 [AGENTS.md](AGENTS.md) makes the resume and milestone-update rules persistent.
 
+**Review workspace (16 November):** the polished two-case offline demo is at
+`outputs/review-polished-20261115/site/index.html`; its portable report ZIP is
+beside `site/`. See the [presentation script and screen sequence](docs/review-2026-11-16.md)
+and [lead-dependent requirements](docs/lead-handoff-2026-11-15.md).
+Case reports include overview cards, native CT exploration, model-mask/probability
+views, reference comparisons and presentation/print controls. The CPTAC case also
+includes eight genuine controlled stage-2 occlusion experiments with an interactive
+score comparison. This is conditional input sensitivity, not Grad-CAM or patient
+risk. Reviewed anatomical labels and independent clinical validation remain pending.
+All reports/data are local ignored outputs; a clone alone does not contain them.
+
 Milestone 1 provides CPU CT inspection; Milestone 2 adds annotation reports and a
 [source-checked PANORAMA plan](docs/panorama-inference-plan.md). Milestone 3 adds
 verified CT-only MHA export, a source-pinned Colab GPU notebook, output import

@@ -253,6 +253,7 @@ def evaluate_lesions(spec_path: Path) -> dict:
                 "case_id": case.case_id,
                 "source_sha256": info["source_sha256"],
                 "reference_description": row["reference_description"],
+                "reference_label": row["reference_label"],
                 "overlap_status": row["overlap_status"],
                 "overlap_evidence": row["overlap_evidence"],
             }
@@ -303,9 +304,17 @@ def write_lesion_report(result: dict, output: Path) -> Path:
         ylabel="Matched reference-lesion fraction",
         title="Exploratory annotation-localization FROC",
         ylim=(-0.02, 1.02),
+        xlim=(0, max(1.0, max(p["false_positives_per_scan"] for p in result["curve"]))),
     )
     ax.grid(alpha=0.3)
-    fig.tight_layout()
+    fig.text(
+        0.5,
+        0.01,
+        f"{result['scan_count']} demonstration scans; not independent clinical accuracy",
+        ha="center",
+        fontsize=8,
+    )
+    fig.tight_layout(rect=(0, 0.04, 1, 1))
     fig.savefig(output / "froc.png", dpi=150)
     plt.close(fig)
     rows = "".join(

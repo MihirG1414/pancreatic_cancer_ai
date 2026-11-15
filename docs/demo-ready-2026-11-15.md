@@ -137,17 +137,28 @@ There are now **two unique model-tested CTs**, not an independent evaluation
 cohort. Repeated inference of the first CT does not add a third case. No cohort
 ROC-AUC, specificity or lesion FROC is established by these two examples.
 
+## Current review package supersedes earlier report layout
+
+Use `outputs/review-polished-20261115/site/index.html` for the combined two-case
+workspace. See [tomorrow's review guide](review-2026-11-16.md). The new layout
+adds evidence cards, section navigation, presentation view, print styling and
+an interactive selector over eight genuine CPTAC occlusion experiments. Original
+CT/model/reference measurements are unchanged. The exploratory lesion-matching
+software and two-case review are implemented; this is not clinical FROC validation.
+Native head/body/tail integration is implemented, but genuine labels are absent.
+The older report-specific verification and paths below remain historical evidence.
+
 ## Remaining completion gates
 
 - Local Edge acceptance and extracted-ZIP rehearsal passed (details below).
   If presenting on another computer, repeat the extraction/opening check there.
 - Establish an appropriate independent positive/negative patient cohort and
   diagnosis references; no case labels are inferred from empty tumor masks.
-- Complete lesion-level matching/FROC and visual error review; classification
+- Validate lesion-level matching/FROC and expert error review on an independent cohort; classification
   AUC/sensitivity/specificity software already requires explicit PDAC references
   and patient separation. A clinical study is not established by running the CLI.
-- Implement/test anatomical head/body/tail and a decision-attribution method.
-  Avoid substituting a guess or calling the probability field attribution.
+- Obtain/review genuine anatomical head/body/tail masks. Conditional stage-2
+  occlusion is completed for the second case; probability remains separate.
 - Obtain expert input and resolve any commercial weight-use permission before
   company deployment. This delivery is an offline research demonstration.
 

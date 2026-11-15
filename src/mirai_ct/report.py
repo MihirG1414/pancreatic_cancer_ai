@@ -83,7 +83,16 @@ def _report_html(
     model_measurements: dict | None = None,
     annotation_info: dict | None = None,
     additional_section: str = "",
+    comparison: dict | None = None,
+    explanation_info: dict | None = None,
 ) -> str:
+    from mirai_ct.presentation import (
+        experiment_explorer,
+        presentation_assets,
+        presentation_script,
+        report_header,
+    )
+
     info = metadata(scan)
     source = html.escape(case.dataset_source)
     title = html.escape(case.case_id)
@@ -183,13 +192,33 @@ RAS centroid (mm): {model_measurements["centroid_ras_mm"]}</p>
     annotation_note = ""
     if annotation_info is not None:
         annotation_note = f"""<p>Reference provenance checked against CT and mask SHA256. Selected source ROI {annotation_info["roi_number"]}: {html.escape(annotation_info["roi_name"])}; label {annotation_info["label_id"]}. Rasterization: {html.escape(annotation_info["rasterization"])}. This is a derived source annotation, not a model prediction or clinical diagnosis.</p>"""
+    header = report_header(
+        case.case_id,
+        prediction_info["score"] if prediction_info else None,
+        model_measurements,
+        comparison,
+        has_viewer=bool(interactive_section),
+        has_model=has_model_outputs,
+        has_evidence=bool(additional_section),
+    )
+    evidence_section = (
+        f'<section class="report-section" id="evidence">{experiment_explorer(explanation_info)}{additional_section}</section>'
+        if additional_section
+        else ""
+    )
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>Case report: {title}</title>
-<style>body{{font:16px/1.5 system-ui,sans-serif;max-width:1200px;margin:2rem auto;padding:0 1rem;color:#18252b}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #aaa;padding:.4rem;text-align:left}}img{{max-width:100%;height:auto}}figure{{margin:2rem 0}}.notice{{background:#eef5f8;padding:1rem}}.viewer-controls{{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;padding:1rem;background:#eef5f8}}.viewer-panels{{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}}.viewer-panels figure{{margin:0;min-width:0}}.viewer-panels canvas{{width:100%;height:auto;image-rendering:pixelated;background:#000}}button,select{{font:inherit;padding:.3rem}}@media(max-width:700px){{.viewer-panels{{grid-template-columns:1fr}}}}pre{{white-space:pre-wrap;overflow-wrap:anywhere}}</style></head>
-<body><h1>PANORAMA CT research report: {title}</h1>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>.viewer-controls{{display:flex;flex-wrap:wrap;align-items:center;padding:1rem}}.viewer-panels{{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}}.viewer-panels figure{{min-width:0}}.viewer-panels canvas{{width:100%;height:auto;image-rendering:pixelated;background:#000}}@media(max-width:700px){{.viewer-panels{{grid-template-columns:1fr}}}}</style>
+{presentation_assets()}</head>
+<body>{header}<main>
+<section id="summary" class="report-section">{summary_html}<p class="muted">Dataset source: {source}</p></section>
+<section class="report-section">{interactive_section}</section>
+<section class="report-section" id="model-products">{model_section if prediction_info is not None else prediction_section}</section>
+{evidence_section}
+<section class="report-section" id="reference-review">{evaluation_section}</section>
+<details id="technical-details" class="technical-details"><summary>Technical details and source annotations</summary>
 <p class="notice"><strong>Dataset annotation measurements are not a model prediction, clinical diagnosis, or performance result.</strong> Original CT and annotation files were read without modification. Model outputs, when imported, are labeled separately.</p>
-<p>Dataset source: {source}</p>
-{summary_html}
 <h2>CT geometry</h2>
 <p>Dimensions (i, j, k): {info["shape"]} voxels<br>
 Header spacing: {info["spacing"]} {html.escape(info["spatial_units"])}<br>
@@ -203,14 +232,11 @@ qform code: {info["qform_code"]}; sform code: {info["sform_code"]}; obliquity: {
 <p>Label meanings follow the MSD Task07 dataset.json when the manifest names that dataset, or an explicitly supplied source-reference provenance record checked against the CT and mask hashes. Other IDs are not interpreted. Voxels are counted in native geometry. Volume uses the absolute affine determinant and documented spatial units; 1 mL = 1,000 mm³. Background is included in counts but has no region box.</p>
 <p>Bounding boxes use original NIfTI voxel indices (i, j, k), zero-based with both minimum and maximum <strong>inclusive</strong>. They enclose all voxels of each label, including disconnected regions. They are axis-aligned in voxel space; direction letters above indicate increasing indices. These are not head/body/tail assignments.</p>
 <table><thead><tr><th>Label ID</th><th>Meaning</th><th>Voxel count</th><th>Bounding box, inclusive</th><th>Physical volume</th></tr></thead><tbody>{"".join(table_rows) if rows else '<tr><td colspan="5">No annotation supplied</td></tr>'}</tbody></table>
-{interactive_section}
 <h2>Native CT views</h2><p>Each image shows CT and, when supplied, an existing annotation overlay. Planes are original voxel axes, not standardized radiological views. Display level 50/window 400 affects appearance only.</p>{views}
 {prediction_section}
 {region_section}
-{evaluation_section}
-{model_section if prediction_info is not None else ""}
-{additional_section}
-</body></html>"""
+</details></main><footer class="report-footer">PANORAMA CT research report: {title}. Original CT geometry preserved. Head/body/tail requires an explicit reviewed anatomical source. Clinical validation remains pending.</footer>
+{presentation_script()}</body></html>"""
 
 
 def generate_report(
@@ -415,6 +441,8 @@ def generate_report(
             model_measurements,
             annotation_info,
             additional_section,
+            evaluation,
+            explanation_info,
         ),
         encoding="utf-8",
     )

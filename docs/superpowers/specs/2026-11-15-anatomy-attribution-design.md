@@ -23,7 +23,7 @@ Saved class probabilities do not supply [Grad-CAM gradients](https://arxiv.org/a
    predicted mask remains unvalidated; reviewed labels are not PANORAMA outputs.
 2. A separate Colab sidecar reuses a completed run, original saved crop/labels,
    native CT and already verified weights. Full five-fold/default-TTA stage-2
-   predictor repeats baseline then eight nonoverlapping input block occlusions
+   predictor repeats two unchanged-input controls then eight nonoverlapping input block occlusions
    around the model-selected lesion with margin. Fixed target is mean class-1
    probability over the original predicted class-1 voxels. Baseline probabilities
    must reproduce the saved output within tolerance before any attribution is
@@ -63,8 +63,23 @@ gate; local arithmetic tests do not demonstrate nnU-Net execution or faithfulnes
 - [x] Add failing anatomy/occlusion/lesion-matching tests.
 - [x] Implement small typed CPU modules and bounded GPU-only adapter.
 - [x] Integrate optional reviewed anatomy/explanation into report and demo.
-- [ ] Add Colab continuation using existing environment/run, with explicit pins.
+- [x] Add Colab continuation using existing environment/run, with explicit pins.
 - [x] Exercise exploratory lesion matching on both genuine existing cases.
 - [ ] Full software checks, artifact/browser review, completion matrix/handoff.
-- [ ] Receive genuine explanation products and verify them before claiming them.
+- [x] Receive genuine explanation products and verify them before claiming them.
 - [ ] Independent cohort and expert review before clinical completion claims.
+
+## V2 numerical controls (actual V1 rejection)
+
+V1's real GPU check rejected max drift 0.0019400716. V2 is a distinct method with
+two unchanged-input controls, four fixed whole-map/target reproduction bounds
+and a control-resolution floor. Exact bounds, rationale and interpretation are
+in [the software handoff](../../remaining-software-2026-11-15.md). Preserve the
+failed V1 log; do not relabel it successful. All V2 controls must pass before
+accepting any block sensitivity; this is engineering qualification, not clinical
+validation. V2 completed and passed local source/model/native target/probability
+checks; the genuine second-case report now includes all eight signed effects.
+
+Latest user scope defers clinical cohort/expert review because lead is unavailable
+before the 16 November review. Finish all independent software/demo checks and
+state those deferred requirements explicitly. No head/body/tail guess is allowed.

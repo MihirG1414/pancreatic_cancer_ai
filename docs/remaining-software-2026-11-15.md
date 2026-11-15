@@ -40,7 +40,8 @@ export/crop identity, native geometry, bundled products, source pins, environmen
 and all five folds. It repeats two unchanged-input controls then eight input block ablations
 using all five folds/default TTA. The fixed target is mean class-1 probability
 over the original predicted class-1 voxels. Version 2 uses the explicit control policy below; ten passes may take considerably longer than the
-original inference; actual duration is not yet measured.
+original inference. The genuine second-case V2 run is now complete; its eight
+block passes took about 124–127 seconds each, excluding controls/setup.
 
 Each block replaces input with stored intensity 50; HU calibration is still
 unresolved. A positive score drop means that intervention reduced the target;
@@ -99,7 +100,7 @@ Implemented/tested software is distinct from received real evidence:
 | Lesion matching/FROC machinery | Tested; exploratory two-case calculation performed |
 | Classification ROC/sensitivity/specificity machinery | Tested; requires explicit diagnosis and threshold declarations |
 | Anatomical subregion integration | Tested; genuine external labels/review still required |
-| Signed occlusion export/import/reporting | Locally tested; real GPU acceptance pending |
+| Signed occlusion export/import/reporting | Genuine CPTAC V2 controls + eight blocks accepted; interactive report included |
 | Independent clinical validation and expert error review | Requires audited positive/negative cases and qualified review |
 
 Synthetic CTs and fake networks can test software, not fill clinical evaluation
@@ -131,3 +132,21 @@ All signed block effects remain in the table; only effects exceeding this floor
 are colored. This is not a confidence interval or statistical significance test.
 Unchanged-control metrics are journaled even if acceptance fails. Original
 predictions are preserved; no alteration is presented as the original model run.
+
+## Genuine evidence received and review delivery
+
+V2 completed on the existing Colab run using source f49a766. Downloaded JSON
+SHA256: 564741aca5474264b22d91cd052baa5c70e79cd89f6597ae1b43a95083bed066.
+Local loader checked the exact CT, original model/run hashes, native geometry,
+39,059 target voxels and original probability bytes. The unchanged controls
+agreed exactly. Each control vs saved map: max error 0.00191924, mean error
+0.000000716680, target voxel MAE 0.0000591867, target-mean error 0.000000962436.
+These pass the declared V2 bounds; they do not identify the cause of the original
+numerical-path difference. Baseline target 0.8039246523; signed effects span
+0.0968189258..0.5830156352, above the 0.0001 resolution floor. Original inference
+outputs remain unchanged. No source annotation was used for these experiments.
+
+The polished offline entry point and presentation instructions are in
+[the review guide](review-2026-11-16.md). Both CTs retain their original numeric
+outputs. The first case has no explanation; neither case has reviewed subregion
+labels. The [lead handoff](lead-handoff-2026-11-15.md) lists the deferred inputs.

@@ -2,6 +2,93 @@
 
 Updated: 2026-11-15 (Asia/Calcutta). This is the authoritative current handoff.
 
+## Review PowerPoint completed (2026-11-15)
+
+Final editable deck: outputs/review-ppt-20261116/final/
+PANORAMA_Project_Review_16_Nov_2026.pptx. Identical convenience copy:
+C:/Users/Mihir1/Downloads/PANORAMA_Project_Review_16_Nov_2026.pptx.
+Nine dark-theme slides, simple language, original CT display/prediction/mask/
+probability/sensitivity figures, two native editable data charts, speaker notes
+and source credits on every slide. Slide 8 links to the existing local demo.
+It uses the genuine saved results; no new inference or anatomy claims.
+
+PPTX: 1,160,593 bytes; SHA256
+cba175e742f261c13028de8c8d8b8673cf130dbe5eef8a92a0d46655d3ab298e.
+All nine final slides rendered and individually visually inspected. Final
+renderings pixel-match the reviewed draft. Package CRC/relationships, 16:9
+geometry, text/font/heading checks passed with no findings. Both charts include
+embedded editable workbooks; numerical caches match original report values to
+the chosen nine decimal places. All nine slides have speaker notes. Finalizer
+and independent content receipts are under the ignored build directory. Deck
+was NOT opened in native PowerPoint; do not claim native application testing.
+
+Recovered the prior completed full-suite output: **244 Python tests passed**,
+157 known SimpleITK/NumPy warnings. All 11 Node checks, scoped Ruff lint/format
+and pip check previously passed. Polished report package integrity and unchanged
+results remain checked. Its native browser/print/presentation rehearsal is still
+pending because prior Computer Use stopped on browser URL policy confidence.
+Source/docs commit and actual remote verification follow below when completed.
+
+Exact next step: open the deck locally, rehearse speaker notes and slide 8's
+offline demonstration before the review. Open the polished report manually to
+check its presentation toggle, experiment selector and print preview on the
+actual display. Lead-only clinical gates remain in docs/lead-handoff-2026-11-15.md.
+No lead input or live GPU is needed to present the saved research results.
+
+Latest user requests at most 10 slides, simple dark theme, easy language and real
+project images/graphs for the 16 November review. Preserve prior report sources
+and outputs. Source remains f49a766 with related uncommitted delivery/polish work.
+No running Python/PowerPoint process on resume. Read presentations skill and
+local authoring/validation guidance. No connected document session; author an
+editable local PPTX using the supplied Artifact Tool runtime, with speaker notes,
+native charts from checked report.json values and original project PNGs. Keep
+generated deck/assets under ignored outputs. No new CT, model or clinical claims.
+Plan nine slides, render every slide, inspect and validate package before delivery.
+Prior polished browser check stopped on URL policy confidence; do not claim it
+passed. Finish documentation/source commit/push after the deck checks.
+
+## Review presentation polish in progress (2026-11-15)
+
+Latest user asks for a more polished report and useful interactions for tomorrow.
+Resume head f49a766; previous related delivery drafts preserved. No active local
+Python/kernel process. Original accepted cases, Colab and existing ZIPs preserved.
+The genuine V2 explanation DID complete after the older checkpoint below: local
+download panorama-explanation-cptac-pilot-01-v2.json, SHA256
+564741aca5474264b22d91cd052baa5c70e79cd89f6597ae1b43a95083bed066.
+Native source/model/target/probability checks passed; 39,059 target voxels,
+two unchanged controls identical, saved-target mean difference 0.000000962436,
+eight positive effects 0.096819..0.583016, all above control floor 0.0001.
+Final prior package: outputs/review-demo-final-20261115/site/index.html;
+ZIP 47,624,675 bytes, SHA256
+e2b5e74ba6206f4fce41d84be9116470369dc388a1cb3b87a7b729bc8b0cea2b.
+All 1,427 files/links/ZIP bytes checked; 1,410 original PNGs unchanged. Extracted
+Edge report navigation, second-case zoom/slice, explanation table/figure and
+lesion review passed. Computer Use stopped at final return/reload because URL
+confidence was insufficient; that reload was NOT verified. Source/docs push
+was not completed. This new user request resumes presentation work.
+
+Plan: preserve all predictions and accepted artifacts; add semantic report
+navigation, concise evidence cards, presentation/print controls and an interactive
+selector over the eight genuine saved occlusion experiments. Improve landing
+page, rebuild in a new folder, run software/artifact checks and actual browser
+acceptance where available, finalize review/lead handoff and commit/push source.
+No invented anatomy, diagnosis, performance or additional inference.
+
+Checkpoint: polished build completed at outputs/review-polished-20261115/site/
+index.html; report ZIP 47,634,219 bytes, SHA256
+7cde259b33ae025ca80811e94f72e8ec74ad6a73a68c83a8d1c4315c4960e1b7.
+All 1,427 package files/local links/ZIP CRC/member bytes passed; all 1,410 original
+case PNGs byte-identical (1,392 viewer PNGs). Both report.json files exactly equal
+the accepted genuine final package: presentation changed, predictions did not.
+Extracted to outputs/review-polished-extracted-20261115. Full 242-test suite passed
+after report changes; two new evidence-meaning tests also passed. All 11 Node
+checks passed (7 viewer + 4 presentation interactions). Ruff lint/format passed
+on src/tests/scripts (47 files); pip check passed. A full 244-test confirmation
+is running. Native rendering/presentation/print review is next; no claim yet.
+Browser connector host unavailable; native Edge inventory still works. Preserve
+the separate Colab window/runtime. Finalize this milestone and push verified
+source/docs; generated artifacts remain ignored. Clinical gates unchanged.
+
 ## Review completion resumed (2026-11-15)
 
 User's review is tomorrow (16 November). Latest scope: finish everything feasible
@@ -29,6 +116,32 @@ outliers, rejection of systematic drift and unstable controls, and genuine-sourc
 API wiring with a fake network. This is not actual V2 GPU execution.
 Then finish the offline entry point, real error/overlap review, extraction/browser
 acceptance and tomorrow's review guide. Record lead-dependent gates separately.
+
+Latest checkpoint: all **242 Python tests passed**, **7 Node viewer checks
+passed**, Ruff lint/format and pip check passed. Known 157 SimpleITK/NumPy shape
+deprecation warnings are not clinical results. Numerical controls V2 was committed
+as f49a766e753160829c0c8f9be0ba93fdd269a72e, pushed and matched remote head.
+A new separate Colab cell now runs that exact source on the existing second CT,
+with original inference preserved and output explanation-cptac-pilot-01-v2.
+Its child is still executing; no V2 acceptance/download is claimed yet. Parent
+subprocess output is not yet visible beyond its start line; do not duplicate it.
+
+Offline two-case entry point built at
+outputs/review-demo-preview-20261115/site/index.html. ZIP 47,226,262 bytes,
+SHA256 2ca1a96533377a8d6986914da8ad7ffefc40d3d3f623210dea9b1abd4e0402ea.
+Build: 104.6699454 seconds, Windows peak process working set 731.27 MiB, sequential
+real cases. All 1,410 case PNGs byte-match the accepted original reports; all
+numeric/source/reference/hash fields match (preview reference descriptions were
+rephrased only; final spec now uses original descriptions). 1,422 total package
+files, local links, ZIP CRC/membership/bytes checked; no source volumes/weights.
+The preview contains no explanation yet. It is not the final accepted package.
+
+Prepared docs/review-2026-11-16.md and docs/lead-handoff-2026-11-15.md; final
+paths/explanation state will be filled after real acceptance. Next: await the
+existing controlled Colab child while reviewing the new entry point; recover the
+complete downloaded explanation, validate exact source/model/target/probability,
+then build a fresh final package and check browser/extracted ZIP. Commit/push
+remaining related source/docs and verify its own actual remote head at handoff.
 
 ## Milestone 9 in progress: remaining phase-one software (2026-11-15)
 
