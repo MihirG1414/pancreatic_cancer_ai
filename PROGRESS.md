@@ -1,6 +1,123 @@
 # Mirai / Rises.io - resume record
 
-Updated: 2026-11-04 (Asia/Calcutta). This is the authoritative current handoff.
+Updated: 2026-11-15 (Asia/Calcutta). This is the authoritative current handoff.
+
+## Milestone 6 software complete; fresh GPU products pending (2026-11-15)
+
+Current result: genuine one-case interactive demo with explicit quantitative
+reference comparison; one additional public CT downloaded, verified, converted
+and prepared for Colab. No new network trained and no second-case inference yet.
+Final verification: **192 Python tests passed**, **7 Node control tests passed**;
+full Ruff lint/format, pip check and Git whitespace passed. The 72 warnings are
+the existing SimpleITK/NumPy shape deprecation in expanded synthetic coverage.
+Actual browser interaction remains unverified; all three new real CT static
+views and generated HTML/asset/measurement states were checked separately.
+
+Primary demo: `outputs/panorama-demo-20261115/report/index.html`; shareable
+`outputs/panorama-demo-20261115/demo-report.zip`. Completed second-case input:
+`outputs/cptac-pilot-input-20261115-ready` (three verified files). All data,
+medical volumes, local manifests, private statement and outputs remain ignored.
+See `docs/completion-and-demo-2026-11-15.md` and
+`docs/public-ct-pilot-2026-11-15.md` for commands, limitations and the remaining plan.
+
+Exact next action: user sends the updated Colab output ZIP when it completes
+(they confirmed they will). Build its report using `mirai_ct.demo` with
+`--require-model-products`, the exact original CT-only export and original
+manifest; inspect actual segmentation/probability views and compute actual
+model-mask overlap. Then run the prepared CPTAC case on the same T4 with a new
+INPUT folder and run directory, preserving the original case. No need to repeat
+old-runtime checks or model downloads locally. Reference RTSTRUCT conversion,
+head/body/tail, decision attribution, independent cohort/FROC and clinical review
+remain open. This is not full phase-one/clinical completion. Commit/push and
+actual remote-head verification follow the final recorded checks.
+
+Resumed from the latest checkpoint, reviewed the original private requirements,
+source, notebook, tests, local artifacts and Git state. Clean local and actual
+remote HEAD both `32a1ea5eac4a0397a62326d73e893f7fa87ab0c4`. No existing Python
+kernel/inference process found; existing outputs preserved. Available RAM about
+1.78 GiB, disk about 312.7 GiB; no local NVIDIA runtime. No Superpowers skills
+are installed; follow specification/design/tests/implementation/review directly.
+
+User confirms the old Colab session was lost and can run a T4 now. Directed them
+to the current nine-cell notebook with model-product export enabled. Genuine
+segmentation/raw probability remain pending receipt; do not repeat the old-file
+recovery check or manufacture these products from the final candidate map.
+Continue the pretrained PANORAMA approach; no new training is requested/implied
+by assembling the final demonstrable pipeline.
+
+This milestone adds bounded native-grid overlap evaluation, explicit distinction
+between candidate-support overlap and actual model-segmentation Dice/IoU, and
+patient-separated case-score evaluation with honest undefined/single-class cases.
+Research public CT data from primary sources, inspect only small metadata before
+selecting any scan, and document source/reference/overlap limitations. Do not
+treat MSD tumor labels as confirmed PDAC diagnoses or development-set examples
+as independent validation. Add an actionable completion/demo guide and preserve
+all existing genuine artifacts. Exact next action: write design and meaningful
+evaluation regressions, inspect current CPTAC-PDA annotation metadata, then
+implement the evaluator and run it on the existing genuine case.
+
+Milestone 6 checkpoint: 17 new analytical/contract evaluation tests initially
+failed for the absent module, then passed after implementation. Genuine existing
+case comparison completed: reference 3,521 voxels, candidate support 5,168,
+intersection 3,251; candidate-support Dice 0.74830245, IoU 0.59783008. These are
+not tumor-segmentation accuracy or independent validation; actual model-mask
+metrics remain null. Results saved under ignored `outputs/panorama-evaluation-20261115`.
+
+Retrieved the official CPTAC-PDA v2 (2025-10-20) annotation metadata, 260,282
+bytes, 536 annotation records, SHA256
+`3bff13e48fd7708671f00443953bc7cf27eca26baa3a4b1ce65347bd9559ea14`.
+Selected one pretreatment CT described as `2.5 PV ABD/PEL` with a matching
+pancreas-lesion annotation (separate from duct/liver annotations). Phase remains
+unconfirmed. Official current NBIA v4 size query reports 251 instances and
+132,856,392 DICOM bytes. Downloaded ONLY that series ZIP, 64,520,781 bytes,
+including its publisher MD5 manifest, to ignored `data/CPTAC-PDA-pilot`.
+No model inference on this CT yet; training independence still not audited.
+Next: verify all individual DICOM hashes, preserve bounded download provenance,
+add/test native DICOM-series intake without resampling and fetch only the paired
+annotation. This is a small public pilot, not a full collection download.
+
+Milestone 6 implementation checkpoint: conventional CT intake tests passed
+**11/11**, including irregular spacing/tilt/duplicate/orientation/frame rejection
+and an end-to-end synthetic DICOM-to-NIfTI round trip. Real CPTAC conversion
+completed after RAM recovered, preserving 512x512x251, 0.78125x0.78125x2.0 mm,
+native LPS. Every source and saved plane was checked; output SHA256
+`a2c685d4c641cdbceac9da6d260e733c6b5a0033e938640d86adbd8d6ac54bf0`.
+All three real inspection PNGs were visually inspected. Retrieved only the paired
+134,946-byte RTSTRUCT and verified its publisher MD5/ZIP CRC; rasterization and
+contour/image-reference verification remain pending. No new model run performed.
+
+Implemented `mirai_ct.demo`: bounded/duplicate-safe ZIP handling, validated import,
+interactive report, explicit comparison and report-only ZIP; optional
+`--require-model-products` rejects older bundles. Added readable overlap tables
+to `mirai_ct.report` when an explicit label/description is requested. The existing
+genuine ZIP built `outputs/panorama-demo-20261115/report/index.html` and a
+9,836,317-byte shareable ZIP. Model-mask/probability availability remains false,
+score/reference counts unchanged; 97 CT assets and table values checked.
+
+Rechecked user's `Downloads/panorama-output.zip`: it is the original Oct-28-IST
+successful run, with all four declared output hashes matching and no model-output
+pair. User will supply the new ZIP when the updated Colab run finishes. No need
+to ask again about runtime access or old artifacts.
+
+One new CT input export was interrupted deliberately after noticing it overlapped
+the genuine demo build; only our own exporter was interrupted, and partial
+`outputs/cptac-pilot-input-20261115` is preserved as incomplete. Restarted export
+sequentially in a fresh `...-ready` folder after the demo finished. Do not use the
+partial folder. Full regression/closure checks and final export validation pending.
+
+Second-case CT-only export completed sequentially at
+`outputs/cptac-pilot-input-20261115-ready` (all three required files present;
+annotation_used=false). Original CPTAC NIfTI hash remains unchanged. The
+interrupted earlier folder is intentionally retained and explicitly excluded
+from handoff. Added exact Colab input-switch instructions that reuse environment
+and weights while preserving the current case and selecting a new input folder.
+User's fresh extended-result ZIP is still pending; do not rerun/download models
+locally. Initial full suite passed 190 tests, then ZIP metadata/path review added
+two tests plus stricter guards; targeted 26 demo/evaluation tests passed. Final
+full-suite, packaging/privacy and remote delivery checks follow.
+
+Historical entries below are dated evidence; their earlier next steps and
+inference-pending statements are superseded by this checkpoint.
 
 ## In progress: original requirements reconciled; model-output completeness (2026-11-04)
 
@@ -441,7 +558,7 @@ suitable Colab/company GPU, then perform the one-case pilot in
 
 Earlier detailed evidence is preserved in [the milestone 1 history](docs/progress.md).
 
-## Current checkpoint
+## Historical milestone 1–3 checkpoint (superseded above)
 
 - **Complete:** milestone 1, CPU-only CT loading and inspection. Four verified
   commits through `bfda5c9` are pushed to `origin/milestone-1-ct-inspection`.
@@ -522,7 +639,7 @@ is uncertain, compare `git rev-parse HEAD` with
 `git ls-remote origin refs/heads/milestone-1-ct-inspection`; do not assume local
 remote-tracking information is current.
 
-## Next technical action - execute the prepared GPU pilot
+## Historical next action - prepared GPU pilot (subsequently completed)
 
 The source review is in `docs/panorama-inference-plan.md`; executable preparation
 and the exact nine-cell Colab handoff are in `docs/milestone-3-demo.md`. Input

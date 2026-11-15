@@ -77,6 +77,7 @@ def _report_html(
     interactive_section: str = "",
     regions: list[dict] | None = None,
     has_model_outputs: bool = False,
+    evaluation_section: str = "",
 ) -> str:
     info = metadata(scan)
     source = html.escape(case.dataset_source)
@@ -162,7 +163,7 @@ def _report_html(
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>Case report: {title}</title>
 <style>body{{font:16px/1.5 system-ui,sans-serif;max-width:1200px;margin:2rem auto;padding:0 1rem;color:#18252b}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #aaa;padding:.4rem;text-align:left}}img{{max-width:100%;height:auto}}figure{{margin:2rem 0}}.notice{{background:#eef5f8;padding:1rem}}.viewer-controls{{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;padding:1rem;background:#eef5f8}}.viewer-panels{{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}}.viewer-panels figure{{margin:0;min-width:0}}.viewer-panels canvas{{width:100%;height:auto;image-rendering:pixelated;background:#000}}button,select{{font:inherit;padding:.3rem}}@media(max-width:700px){{.viewer-panels{{grid-template-columns:1fr}}}}pre{{white-space:pre-wrap;overflow-wrap:anywhere}}</style></head>
-<body><h1>CPU case report: {title}</h1>
+<body><h1>PANORAMA CT research report: {title}</h1>
 <p class="notice"><strong>Dataset annotation measurements are not a model prediction, clinical diagnosis, or performance result.</strong> Original CT and annotation files were read without modification. Model outputs, when imported, are labeled separately.</p>
 <p>Dataset source: {source}</p>
 <h2>CT geometry</h2>
@@ -181,6 +182,7 @@ qform code: {info["qform_code"]}; sform code: {info["sform_code"]}; obliquity: {
 <h2>Native CT views</h2><p>Each image shows CT and, when supplied, an existing annotation overlay. Planes are original voxel axes, not standardized radiological views. Display level 50/window 400 affects appearance only.</p>{views}
 {prediction_section}
 {region_section}
+{evaluation_section}
 {model_section if prediction_info is not None else ""}
 </body></html>"""
 
@@ -192,6 +194,8 @@ def generate_report(
     *,
     interactive: bool = False,
     measure_candidates: bool = False,
+    reference_label: int | None = None,
+    reference_description: str = "",
 ) -> Path:
     """Write HTML/native views, plus separate imported-prediction views if supplied."""
     if output.exists():
@@ -200,6 +204,19 @@ def generate_report(
         raise ValueError(
             "Interactive viewer/candidate measurements requires a validated --predictions import."
         )
+    evaluation, evaluation_section = None, ""
+    if reference_label is not None or reference_description:
+        if predictions is None or reference_label is None:
+            raise ValueError("Reference comparison requires predictions, label ID and description.")
+        from mirai_ct.evaluation import comparison_html, evaluate_case
+
+        evaluation = evaluate_case(
+            case,
+            predictions,
+            reference_label=reference_label,
+            reference_description=reference_description,
+        )
+        evaluation_section = comparison_html(evaluation)
     scan = load_volume(case.scan_path)
     mask = load_volume(case.label_path) if case.label_path is not None else None
     prediction, prediction_info, prediction_indices = None, None, None
@@ -289,6 +306,7 @@ def generate_report(
             "attribution_available": False,
             "anatomical_subregion": "unassigned",
             "clinical_validation": "not established",
+            "reference_comparison": evaluation,
         },
     )
     report = output / "index.html"
@@ -304,6 +322,7 @@ def generate_report(
             interactive_section,
             regions,
             bool(model_outputs),
+            evaluation_section,
         ),
         encoding="utf-8",
     )
@@ -328,6 +347,8 @@ def main() -> int:
         action="store_true",
         help="Add connected candidate support geometry (requires optional SimpleITK)",
     )
+    parser.add_argument("--reference-label", type=int, help="Explicit annotation ID to compare")
+    parser.add_argument("--reference-description", default="", help="Source and meaning of that ID")
     args = parser.parse_args()
     try:
         matches = [case for case in read_cases(args.manifest) if case.case_id == args.case_id]
@@ -339,6 +360,8 @@ def main() -> int:
             args.predictions,
             interactive=args.interactive,
             measure_candidates=args.measure_candidates,
+            reference_label=args.reference_label,
+            reference_description=args.reference_description,
         )
         print(
             json.dumps(

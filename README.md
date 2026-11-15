@@ -27,6 +27,27 @@ See [model-output handoff](docs/model-output-handoff.md) for recovery/fresh-run
 steps. `--measure-candidates` adds support-region coordinates/extents with
 explicit limits; `report.json` records output availability and the model score.
 
+2026-11-15: added checked conventional DICOM intake, explicit native-grid overlap
+and patient-separated case-score evaluation, and a one-command Colab ZIP-to-demo
+builder. Acquired/converted one additional CPTAC-PDA CT with a matched source
+annotation; inference and reference-mask conversion on that case are pending.
+See [current completion/demo steps](docs/completion-and-demo-2026-11-15.md) and
+[public-data selection/checks](docs/public-ct-pilot-2026-11-15.md). The existing
+case's candidate-support overlap is measured separately from unavailable actual
+model-segmentation metrics. No independent accuracy result is claimed.
+
+Build an offline report and shareable report ZIP directly from a Colab download:
+
+```powershell
+.\.venv\Scripts\python.exe -m mirai_ct.demo --manifest .\cases.local.csv --case-id pancreas_290 --input-export 'C:\path\to\input-export' --bundle 'C:\path\to\panorama-output.zip' --output .\outputs\demo-new
+```
+
+Add `--require-model-products` when checking the newer segmentation/probability
+bundle. For explicit reference comparisons, supply `--reference-label 2` and
+`--reference-description 'MSD Task07 existing tumor annotation; PDAC status unverified'`.
+The report-only ZIP contains medical-image display copies; it does not include
+source CT or derived volumetric files. Keep generated reports and data out of Git.
+
 Generate a fresh interactive report from the existing validated import:
 
 ```powershell
