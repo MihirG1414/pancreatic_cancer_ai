@@ -4,7 +4,9 @@ Later same-day update: the matched RTSTRUCT is now converted and its source CT
 links/native saved grid checked. See [the current demo checkpoint](demo-ready-2026-11-15.md)
 for counts, overlay report, new reference manifest and model-comparison command.
 Earlier statements below that reference-mask conversion is pending describe the
-initial acquisition checkpoint. Second-case model inference remains pending.
+initial acquisition checkpoint. The second CT's genuine successful Colab outputs
+were subsequently received and validated; the current demo checkpoint records
+the resulting report and comparison.
 
 ## Source choice
 

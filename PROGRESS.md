@@ -2,6 +2,78 @@
 
 Updated: 2026-11-15 (Asia/Calcutta). This is the authoritative current handoff.
 
+## Milestone 8 complete: genuine second CT demo (2026-11-15)
+
+Received and validated `C:/Users/Mihir1/Downloads/panorama-output (2).zip`
+(19,476,127 bytes; SHA256
+62d12440b8fb679db437b6fb40ad6e67294a0c79b87ead35739ddbb4497c035a).
+It belongs to cptac_pilot_01, source SHA256
+a2c685d4c641cdbceac9da6d260e733c6b5a0033e938640d86adbd8d6ac54bf0,
+not the first MSD CT. Both stages completed on T4 with unchanged official
+pins/five folds; recorded inference 229.141104468 seconds (excludes setup).
+Sampled maxima: 6,564.86 MiB process-tree RAM / 1,905 MiB device; 1-second
+samples are not exact peaks. No training or extra inference/download performed.
+
+Current second demo: `outputs/cptac-demo-with-products/report/index.html`.
+Share ZIP: `outputs/cptac-demo-with-products/demo-report.zip`, 36,791,910 bytes,
+SHA256 99d4824283f3a3afc432d6b998d047418704eacb8e5c8a2357808f91ef7b6fa7.
+Original bundle, validated native imports, report.json, demo.json and independent
+MHA/reference check are preserved beside it. First-case final demo is unchanged.
+Current presentation guide: `docs/demo-ready-2026-11-15.md` (now both cases).
+
+Second CT actual mask: 39,059 voxels / 47.679443359375 mL; inclusive native bounds
+[335,258,178]-[403,328,199], extents 53.90625 x 55.46875 x 44.0 mm (not clinical
+diameter); RAS centroid [-73.07187044,-27.38929408,-16.19267646] mm. Source ROI
+reference: 64,219 voxels / 78.392333984375 mL. Model intersection 38,875; Dice
+0.752822479134 / IoU 0.603620949335. There are 25,344 reference voxels outside
+model mask and 184 model voxels outside reference. This visibly incomplete
+coverage must not be described as clinical accuracy or complete tumor extent.
+Candidate support is separate: one region, 41,567 voxels / 50.740966796875 mL,
+score 0.976832449436 (uncalibrated), Dice 0.781369935530 / IoU 0.641187148021.
+The raw probability field is not decision attribution. Source ROI interpretation,
+clinical mask validation and training independence remain unresolved.
+
+Checks passed: all six declared bundle hashes; exact source/export provenance;
+native grid/orientation and every imported model-output plane; report comparison
+agrees with independent direct original MHA/reference counts; 1,004 viewer PNGs,
+nine static views, HTML local assets, ZIP CRC and byte-for-byte report contents.
+Visually inspected three actual model-mask/probability views and three separate
+source-reference/candidate views. One scan processed at a time in the existing
+venv, about 2,003 MiB RAM available at start; no user processes/kernels stopped.
+
+Actual native Edge acceptance: original generated report loaded; synchronized
+panels at k=190, correct k=0/250 boundary disabling, largest-candidate return,
+next k=191 (2,977 voxels) and shared zoom. Comparison table values rendered.
+Extracted the actual report-only ZIP to
+`outputs/cptac-demo-extracted-check-20261115/` and opened it locally: all three
+panels loaded, Off hid candidate overlay, reload restored k=190 / Fill / 65% /
+full view. Left extracted demo open in separate report window; original Colab
+window/runtime preserved. Screenshot/status verified state when accessibility
+slider values lagged updates. Source/model/artifact contents were not altered.
+
+12 targeted notebook tests, Ruff/format and syntax/cleared-notebook checks passed
+for the upload fix. Changed documentation links/Python blocks/Git whitespace
+passed. No new implementation changed during this import; latest full-project
+checks remain milestone 7's 216 Python / 7 Node tests. Data, local manifests,
+source documents and generated outputs remain Git-ignored. Two unique CTs now
+have genuine model results; repeated first-case runs are not extra cases.
+
+Exact next code action: inspect the pinned stage-1/stage-2 label definitions
+and available exports, then draft
+`docs/superpowers/specs/2026-11-15-anatomy-attribution-design.md` against the
+original statement, specifying required genuine GPU artifacts and acceptance
+tests before implementing head/body/tail or attribution. Separately obtain
+audited patient-level PDAC labels and training-overlap checks for an independent
+positive/negative cohort before ROC/specificity/FROC claims.
+Do not infer diagnoses from an ROI or publish an accuracy estimate from these
+two cases. The current two-case research demo is ready to present; overall
+clinical phase-one validation is not complete. No repeat Colab run is required
+to view either accepted report.
+
+Delivery: upload fix 48745e266a44b10df933b27b762d5e53d6ebdb38 was pushed and
+matched the actual remote branch head. This result/documentation checkpoint
+will be committed/pushed next, with its own remote head verified before handoff.
+
 ## Second-case Colab upload collision fixed (2026-11-15)
 
 Second-case cell 5 finished uploading the correct three inputs but rejected
@@ -9,7 +81,7 @@ Colab's returned saved names: `ct (1).mha`, `input-provenance (1).json` and
 `clinical-information-pancreatic-ct (1).json`. Read-only native Colab inspection
 confirmed the names; official SDK source confirms its unique-name behavior.
 This was a notebook upload collision, not incorrect user selection or inference
-failure. No second-case genuine model output has been received yet.
+failure. The later successful second-case result is recorded in milestone 8 above.
 
 Fixed notebook cell 5 to use a fresh temporary upload directory, validate exact
 basenames/path containment/size before creating INPUT, and free upload buffers.
@@ -31,15 +103,13 @@ Recovery for the already-completed browser upload is documented in
 observed-name, cptac_pilot_01, annotation_used=false and MHA checksum checks;
 refuse overwriting INPUT. User was given this cell, then instructed to rerun
 cell 5 (full input checks/reuse), followed by 7, 8 and 9. Do not restart/re-upload
-or rerun setup/weights to address this error. Recovery execution in Colab is
-pending user confirmation; the permanent fix has been verified locally only.
+or rerun setup/weights to address this error. User subsequently supplied the
+successful second-case ZIP, confirming the workflow proceeded; the permanent
+staging change itself is locally tested.
 
-Exact next action: user runs recovery then cells 5/7/8/9 and provides the new
-second-case ZIP. Validate its source CT hash/case/native model products, then
-build with `cases.cptac.reference.local.csv`, ready CT export and source reference
-provenance as recorded below. Inspect genuine overlays/measurements. Do not
-claim training independence or clinical validation. Commit/push verification
-of this upload fix is recorded after the checks, before session handoff.
+The then-pending recovery/inference/import has since completed in milestone 8
+above. Do not repeat it. Upload fix commit and remote verification are recorded
+there; training independence and clinical validation remain unestablished.
 
 ## Milestone 7 complete locally: genuine mask/heatmap demo and source reference (2026-11-15)
 

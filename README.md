@@ -22,9 +22,9 @@ requirements and pending manual browser/GPU checks.
 
 After reviewing the original phase-one statement, optional native model
 segmentation/raw-probability exports and candidate geometry are implemented.
-Actual extra GPU products were received and verified on 2026-11-15. The current
-demo has a genuine predicted mask, raw probability heatmap, mask measurements
-and single-case annotation overlap. See the [current demo and exact remaining
+Actual extra GPU products were received and verified on 2026-11-15. The reports
+use genuine predicted masks, raw probability heatmaps, mask measurements and
+per-case source-annotation overlap. See the [current demo and exact remaining
 gates](docs/demo-ready-2026-11-15.md); raw probability is not decision attribution.
 See [model-output handoff](docs/model-output-handoff.md) for recovery/fresh-run
 steps. `--measure-candidates` adds support-region coordinates/extents with
@@ -33,12 +33,13 @@ explicit limits; `report.json` records output availability and the model score.
 2026-11-15: added checked conventional DICOM intake, explicit native-grid overlap
 and patient-separated case-score evaluation, and a one-command Colab ZIP-to-demo
 builder. Acquired/converted one additional CPTAC-PDA CT with a matched source
-annotation. Its RTSTRUCT is now converted to a checked native reference mask;
-inference on that second case remains pending.
-See [current completion/demo steps](docs/completion-and-demo-2026-11-15.md) and
-[public-data selection/checks](docs/public-ct-pilot-2026-11-15.md). The existing
-case's candidate-support overlap is measured separately from unavailable actual
-model-segmentation metrics. No independent accuracy result is claimed.
+annotation. Its RTSTRUCT is converted to a checked native reference mask, and
+the second CT's successful genuine Colab outputs have now been received and
+validated. These are **two different model-tested CTs**, with training overlap
+unresolved; no independent accuracy result is claimed. See the
+[current demo results and remaining steps](docs/demo-ready-2026-11-15.md) and
+[public-data selection/checks](docs/public-ct-pilot-2026-11-15.md). Candidate-support
+overlap and actual model-mask overlap are measured separately.
 
 Build an offline report and shareable report ZIP directly from a Colab download:
 

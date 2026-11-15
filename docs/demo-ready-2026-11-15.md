@@ -1,21 +1,29 @@
 # Current research demo — 15 November 2026
 
-This supersedes the earlier same-day milestone-6 handoff. The newly received
-Colab ZIP has genuine segmentation and raw-probability outputs. The CT reference
-conversion and reporting below are real completed work; they are not predictions
-substituted from an annotation or synthetic test.
+This supersedes the earlier same-day milestone-6 handoff. Genuine successful
+Colab outputs have now been received for **two different real CTs**, from MSD
+Task07 and CPTAC-PDA. Both include actual model segmentation and raw probability.
+Source annotations were used only for local comparison, never as model inputs.
+These are compatibility/research examples; training independence remains unresolved.
 
 ## Open and present
 
-Open `outputs/panorama-demo-final-20261115/index.html`. Keep its entire directory
-intact. Share `outputs/panorama-demo-final-20261115.zip`, which contains the HTML,
-PNG display copies, viewer JavaScript/metadata and report.json. Source CT,
-volumetric predictions and model weights remain outside that report ZIP and Git.
+Open either report, keeping its entire directory intact:
+
+| CT | Interactive report | Report-only share ZIP |
+|---|---|---|
+| MSD Task07 | `outputs/panorama-demo-final-20261115/index.html` | `outputs/panorama-demo-final-20261115.zip` |
+| CPTAC-PDA | `outputs/cptac-demo-with-products/report/index.html` | `outputs/cptac-demo-with-products/demo-report.zip` |
+
+Report ZIPs contain HTML, PNG display copies, viewer JavaScript/metadata and
+report.json. Extract the ZIP before opening index.html. Source CT, volumetric
+predictions and model weights remain outside the report ZIPs and Git.
 
 1. Show the **Research findings summary** at the top. State that this is a
    pretrained PANORAMA research screening demonstration.
 2. Show native slice navigation and jump to the largest candidate cross-section
-   (k=42). The source annotation and detection map use separate panels.
+   (k=42 for MSD, k=190 for CPTAC). The source annotation and detection map use
+   separate panels.
 3. Scroll to **Model segmentation and raw-probability heatmap**. These panels now
    show actual GPU model products. Probability-weighted display opacity leaves
    low-probability CT visible; stored probability values and the 0–1 scale are unchanged.
@@ -28,7 +36,8 @@ Suggested short script:
 > It produces a candidate map, scan score, predicted lesion mask and probability
 > heatmap. We preserve the scan's original geometry, measure the predicted mask,
 > compare it with the dataset annotation, and generate this interactive report.
-> We also prepared a second public CT with its matching source annotation. This
+> The same pipeline now works on a second real CT from a different public
+> collection, with its own model outputs and source-reference comparison. This
 > is a working research prototype; independent accuracy testing is still pending.
 
 ## Genuine first-case evidence
@@ -64,7 +73,7 @@ Zeros outside the evaluated crop mean not evaluated. Head/body/tail and a
 validated yes/no clinical cutoff remain unavailable. One high-scoring positive
 example does not establish specificity, ROC-AUC or early-stage screening accuracy.
 
-## Second public CT and reference are prepared
+## Genuine second-case evidence and source reference
 
 One selected pretreatment CPTAC-PDA CT was acquired from TCIA using bounded
 one-series downloads with publisher MD5 and ZIP CRC checks. Its original native
@@ -92,20 +101,46 @@ and general rasterization validation remain pending.
 The CT/export hashes did not change and annotation was never supplied to the
 model. Do not re-export input merely to add a local evaluation reference.
 
-After receiving the second-case Colab ZIP:
+The received `panorama-output (2).zip` is a genuine successful result for the
+second CT, not another run of the MSD scan. Its source checksum matches the
+prepared CPTAC CT. Six declared output hashes, export provenance, official
+source pins/five folds and native model-product grids/voxels passed validation.
+Recorded inference duration: **229.141104 seconds** (about 3 minutes 49 seconds),
+excluding setup/download. Sampled maxima were 6,564.86 MiB process-tree RAM and
+1,905 MiB device usage; these are samples, not guaranteed exact peaks/minima.
+
+| Second CT result | Value | Meaning |
+|---|---:|---|
+| Scan score | 0.9768324494 | Uncalibrated model score, not 97.68% cancer probability |
+| Actual model mask | 39,059 voxels | Stage-2 class-1 prediction |
+| Model-mask volume | 47.679443 mL | Unvalidated native-voxel measurement |
+| Source reference | 64,219 voxels / 78.392334 mL | Explicit source ROI, not a new model output |
+| Model/reference intersection | 38,875 voxels | Exact overlap on the original grid |
+| Model-mask Dice / IoU | 0.752822 / 0.603621 | Per-case overlap, not diagnostic accuracy |
+| Candidate-support Dice / IoU | 0.781370 / 0.641187 | Different postprocessed support, not model-mask overlap |
+
+Independent direct MHA/reference counts agreed with the report's NIfTI comparison.
+The predicted mask is smaller than the source reference: 25,344 reference voxels
+are outside the mask, and 184 model voxels are outside the reference. The source
+ROI's clinical interpretation/rasterization still needs expert review. Do not
+present overlap as proof of a correct clinical diagnosis or complete tumor extent.
+
+Original result, validated import and machine-readable report are preserved under
+`outputs/cptac-demo-with-products/`. Rebuilding is optional; choose a new output
+folder so the accepted report is preserved:
 
 ```powershell
-.\.venv\Scripts\python.exe -m mirai_ct.demo --manifest .\cases.cptac.reference.local.csv --case-id cptac_pilot_01 --input-export .\outputs\cptac-pilot-input-20261115-ready --bundle 'C:\path\to\panorama-cptac-pilot-01.zip' --require-model-products --reference-label 1 --reference-description 'CPTAC-PDA ROI 1 PANCREAS - 1; source contour-derived reference; diagnosis not inferred' --annotation-provenance .\data\CPTAC-PDA-pilot\reference-20261115\reference.json --output .\outputs\cptac-demo-with-products
+.\.venv\Scripts\python.exe -m mirai_ct.demo --manifest .\cases.cptac.reference.local.csv --case-id cptac_pilot_01 --input-export .\outputs\cptac-pilot-input-20261115-ready --bundle 'C:\Users\Mihir1\Downloads\panorama-output (2).zip' --require-model-products --reference-label 1 --reference-description 'CPTAC-PDA ROI 1 PANCREAS - 1; source contour-derived reference; diagnosis not inferred' --annotation-provenance .\data\CPTAC-PDA-pilot\reference-20261115\reference.json --output .\outputs\cptac-demo-rebuild-new
 ```
 
-Only this second-case inference/result remains pending here. Two successful runs
-of the first CT are still **one unique model-tested CT**, not a two-case test set.
+There are now **two unique model-tested CTs**, not an independent evaluation
+cohort. Repeated inference of the first CT does not add a third case. No cohort
+ROC-AUC, specificity or lesion FROC is established by these two examples.
 
 ## Remaining completion gates
 
-- Receive/import the second CT's actual outputs and inspect reference comparisons.
-- Actual local Edge slider/zoom/opacity/reload acceptance passed (details below).
-  Rehearse the presentation and ZIP extraction on the eventual demo computer.
+- Local Edge acceptance and extracted-ZIP rehearsal passed (details below).
+  If presenting on another computer, repeat the extraction/opening check there.
 - Establish an appropriate independent positive/negative patient cohort and
   diagnosis references; no case labels are inferred from empty tumor masks.
 - Complete lesion-level matching/FROC and visual error review; classification
@@ -130,5 +165,28 @@ first/last slice boundaries, largest-candidate focus (k=42), previous/next (k=43
 has 618 candidate voxels), shared candidate zoom, fill/outline/off, opacity and
 offline reload. Screenshots confirmed actual rendering. The separate report
 window remains open; the user's active Colab window/runtime was preserved.
-ZIP CRC/content checks passed; an extraction/presentation rehearsal on the
-eventual demo computer is still useful.
+Second CT verification also passed: all six bundle hashes; matching original
+CT/export identity; unchanged native grids and every imported model-output plane;
+independent direct MHA/reference counts matching the NIfTI report; all 1,004
+viewer PNGs, nine static views and local HTML asset references; ZIP CRC and
+byte-for-byte report membership. All three model-mask/raw-probability PNGs and
+all three separate reference/candidate PNGs were visually inspected.
+
+Actual Edge checks on the second report confirmed k=0/250 boundaries (Previous/
+Next disabled respectively), largest-candidate focus k=190 (3,088 voxels), next
+k=191 (2,977), and shared zoom. The reference comparison table rendered the
+verified values. The report-only ZIP was extracted to
+`outputs/cptac-demo-extracted-check-20261115/` and opened locally in Edge. Its CT,
+reference and candidate panels loaded, Off hid the candidate overlay, and reload
+restored k=190 / Fill / 65% opacity / full view. Browser accessibility values
+sometimes lagged rendering; screenshots and status text confirmed actual state.
+The extracted demo is left open in a separate report window; Colab is preserved.
+
+Second report ZIP: 36,791,910 bytes; SHA256
+`99d4824283f3a3afc432d6b998d047418704eacb8e5c8a2357808f91ef7b6fa7`.
+Original input result ZIP SHA256:
+`62d12440b8fb679db437b6fb40ad6e67294a0c79b87ead35739ddbb4497c035a`.
+The notebook upload fix passed 12 targeted notebook tests plus Ruff/format and
+cleared-notebook/syntax checks. No source behavior changed during the second
+result import, so the full project suite was not repeated for documentation-only
+handoff updates. These checks do not establish clinical model performance.
